@@ -1,0 +1,88 @@
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 22px;
+  min-width: 0;
+  user-select: none;
+}
+
+.status {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  pointer-events: none;
+
+  > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.bar {
+  width: 120px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  overflow: hidden;
+  flex: none;
+
+  i {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.2s linear;
+  }
+}
+
+.winbtns {
+  display: flex;
+  align-self: stretch;
+  height: 44px;
+}
+
+.winbtn {
+  width: 46px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+
+  &:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+}
+
+.close:hover {
+  background: #c42b1c;
+  color: #fff;
+}
+
+@container win (max-width: 1060px) {
+  .bar {
+    display: none;
+  }
+}
+
+.floating {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  justify-content: flex-end;
+  z-index: 45;
+}

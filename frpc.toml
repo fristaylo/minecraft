@@ -1,0 +1,25 @@
+serverAddr = "{{ .Envs.FRP_SERVER_ADDR }}"
+serverPort = 7000
+auth.method = "token"
+auth.token = "{{ .Envs.FRP_TOKEN }}"
+
+[[proxies]]
+name = "minecraft-game"
+type = "tcp"
+localIP = "minecraft"
+localPort = 25565
+remotePort = 25565
+
+[[proxies]]
+name = "minecraft-https"
+type = "tcp"
+localIP = "caddy"
+localPort = 8443
+remotePort = 8443
+
+[[proxies]]
+name = "minecraft-http"
+type = "tcp"
+localIP = "caddy"
+localPort = 80
+remotePort = 80

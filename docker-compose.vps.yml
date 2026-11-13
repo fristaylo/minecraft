@@ -1,0 +1,13 @@
+name: minecraft-frp
+
+services:
+    frps:
+        image: fatedier/frps:v0.61.1
+        restart: unless-stopped
+        network_mode: host
+        command: ["-c", "/etc/frp/frps.toml"]
+        environment:
+            FRP_TOKEN: ${FRP_TOKEN}
+            FRP_BIND_ADDR: ${FRP_BIND_ADDR}
+        volumes:
+            - ./frps.toml:/etc/frp/frps.toml:ro

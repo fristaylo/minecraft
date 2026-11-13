@@ -1,0 +1,13 @@
+bindPort = 7000
+proxyBindAddr = "{{ .Envs.FRP_BIND_ADDR }}"
+auth.method = "token"
+auth.token = "{{ .Envs.FRP_TOKEN }}"
+
+[[allowPorts]]
+single = 80
+
+[[allowPorts]]
+single = 8443
+
+[[allowPorts]]
+single = 25565

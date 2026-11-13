@@ -1,0 +1,46 @@
+name: Launcher release
+
+on:
+    push:
+        tags: [launcher-v*]
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+                  cache-dependency-path: launcher/package-lock.json
+
+            - uses: dtolnay/rust-toolchain@stable
+
+            - uses: swatinem/rust-cache@v2
+              with:
+                  workspaces: launcher/src-tauri
+
+            - run: npm ci
+              working-directory: launcher
+
+            - name: Set version from tag
+              shell: bash
+              run: sed -i "s/\"version\": \".*\"/\"version\": \"${GITHUB_REF_NAME#launcher-v}\"/" launcher/src-tauri/tauri.conf.json
+
+            - uses: tauri-apps/tauri-action@v0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+                  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+                  API_URL: ${{ vars.API_URL }}
+              with:
+                  projectPath: launcher
+                  tagName: ${{ github.ref_name }}
+                  releaseName: Launcher ${{ github.ref_name }}
+                  releaseDraft: false
+                  includeUpdaterJson: true

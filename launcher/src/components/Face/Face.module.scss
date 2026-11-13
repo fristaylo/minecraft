@@ -1,0 +1,19 @@
+.face {
+  display: block;
+  flex: none;
+  border-radius: 10px;
+  image-rendering: pixelated;
+  background-color: var(--surface-3);
+  background-repeat: no-repeat;
+  background-size: calc(var(--s) * 64) auto;
+  background-position:
+    calc(var(--s) * -40) calc(var(--s) * -8),
+    calc(var(--s) * -8) calc(var(--s) * -8);
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  color: var(--muted);
+}

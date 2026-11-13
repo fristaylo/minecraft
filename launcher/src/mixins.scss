@@ -1,0 +1,103 @@
+@mixin desktopHover(
+    $transition: true,
+    $outerDuration: 0.2s,
+    $innerDuration: 0.3s,
+    $disableTextDecoration: true,
+    $extraProperty: null
+) {
+    $outerTransition: null;
+    $innerTransition: null;
+
+    @if $extraProperty {
+        $outerTransition: $extraProperty $outerDuration ease-out;
+        $innerTransition: $extraProperty $innerDuration ease-out;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        @if $transition {
+            transition:
+                background $outerDuration ease-out,
+                color $outerDuration ease-out,
+                fill $outerDuration ease-out,
+                opacity $outerDuration ease-out,
+                transform $outerDuration ease-out,
+                border-color $outerDuration ease-out,
+                $outerTransition;
+
+            svg {
+                transition:
+                    transform $outerDuration ease-out,
+                    fill $outerDuration ease-out,
+                    scale $outerDuration ease-out;
+            }
+        }
+
+        &:hover,
+        &:active {
+            @if $transition {
+                transition:
+                    background $innerDuration ease-out,
+                    color $innerDuration ease-out,
+                    fill $innerDuration ease-out,
+                    opacity $innerDuration ease-out,
+                    transform $innerDuration ease-out,
+                    border-color $outerDuration ease-out,
+                    $innerTransition;
+
+                svg {
+                    transition:
+                        transform $innerDuration ease-out,
+                        fill $innerDuration ease-out,
+                        scale $innerDuration ease-out;
+                }
+            }
+
+            @if $disableTextDecoration {
+                text-decoration: none;
+            }
+            @content;
+        }
+    }
+}
+
+@mixin mediaSM {
+    $mobileBreakpoint: 500px;
+
+    @media (max-width: $mobileBreakpoint) {
+        @content;
+    }
+
+    @media (max-height: $mobileBreakpoint) and (orientation: landscape) {
+        @content;
+    }
+}
+
+@mixin mediaLG {
+    @media (max-width: 1024px) {
+        @content;
+    }
+}
+
+@mixin mediaTouch {
+    @media (hover: none), (pointer: coarse) {
+        @content;
+    }
+}
+
+@mixin scrollBar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255 255 255 / 20%) transparent;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255 255 255 / 20%);
+        border-radius: 2px;
+    }
+}

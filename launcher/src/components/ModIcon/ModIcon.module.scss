@@ -1,0 +1,12 @@
+.icon {
+  display: block;
+  flex: none;
+  object-fit: cover;
+  background: var(--surface-3);
+}
+
+.blank {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}

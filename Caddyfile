@@ -1,0 +1,17 @@
+{$API_URL} {
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle_path /files/* {
+		root * /data/files
+		file_server
+	}
+
+	handle_path /textures/* {
+		root * /data/textures
+		try_files {path}.png
+		header Content-Type image/png
+		file_server
+	}
+}
