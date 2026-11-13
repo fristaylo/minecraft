@@ -62,6 +62,6 @@ jobs:
                   projectPath: launcher
                   tagName: launcher-v${{ steps.version.outputs.version }}
                   releaseName: Launcher v${{ steps.version.outputs.version }}
-                  commitish: ${{ github.sha }}
+                  releaseCommitish: ${{ github.sha }}
                   releaseDraft: false
                   includeUpdaterJson: true
