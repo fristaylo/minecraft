@@ -2,16 +2,25 @@ name: Launcher release
 
 on:
     push:
-        tags: [launcher-v*]
+        branches: [master]
+        paths: ['launcher/**']
+    workflow_dispatch:
+
+concurrency:
+    group: launcher-release
+    cancel-in-progress: false
 
 permissions:
     contents: write
 
 jobs:
     release:
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '--fix')
         runs-on: windows-latest
         steps:
             - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - uses: actions/setup-node@v4
               with:
@@ -28,9 +37,20 @@ jobs:
             - run: npm ci
               working-directory: launcher
 
-            - name: Set version from tag
+            - name: Bump version
+              id: version
               shell: bash
-              run: sed -i "s/\"version\": \".*\"/\"version\": \"${GITHUB_REF_NAME#launcher-v}\"/" launcher/src-tauri/tauri.conf.json
+              run: |
+                  LATEST=$(git tag --list 'launcher-v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
+                  if [ -z "$LATEST" ]; then
+                      BASE=$(jq -r .version launcher/src-tauri/tauri.conf.json)
+                  else
+                      BASE=${LATEST#launcher-v}
+                  fi
+                  VERSION="${BASE%.*}.$((${BASE##*.} + 1))"
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+                  jq --arg v "$VERSION" '.version = $v' launcher/src-tauri/tauri.conf.json > tauri.conf.tmp
+                  mv tauri.conf.tmp launcher/src-tauri/tauri.conf.json
 
             - uses: tauri-apps/tauri-action@v0
               env:
@@ -40,7 +60,8 @@ jobs:
                   API_URL: ${{ vars.API_URL }}
               with:
                   projectPath: launcher
-                  tagName: ${{ github.ref_name }}
-                  releaseName: Launcher ${{ github.ref_name }}
+                  tagName: launcher-v${{ steps.version.outputs.version }}
+                  releaseName: Launcher v${{ steps.version.outputs.version }}
+                  commitish: ${{ github.sha }}
                   releaseDraft: false
                   includeUpdaterJson: true
