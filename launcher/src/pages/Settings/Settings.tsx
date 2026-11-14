@@ -224,21 +224,6 @@ function Behaviour() {
           onChange={(event) => update({ console: event.target.checked })}
         />
       </Row>
-      <Row title="Загрузок одновременно" hint="Уменьшите, если интернет медленный">
-        <div className={s.parallel}>
-          <input
-            type="range"
-            min={1}
-            max={16}
-            step={1}
-            value={settings.parallel_downloads}
-            style={pctStyle(settings.parallel_downloads, 1, 16)}
-            aria-label="Загрузок одновременно"
-            onChange={(event) => update({ parallel_downloads: Number(event.target.value) })}
-          />
-          <b className="pct">{settings.parallel_downloads}</b>
-        </div>
-      </Row>
     </div>
   );
 }

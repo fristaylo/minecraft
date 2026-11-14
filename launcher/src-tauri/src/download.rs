@@ -17,6 +17,8 @@ use tokio_util::sync::CancellationToken;
 
 use crate::AppState;
 
+const PARALLEL_DOWNLOADS: usize = 8;
+
 pub struct Task {
     pub url: String,
     pub path: PathBuf,
@@ -28,7 +30,6 @@ pub struct Ctx {
     pub app: AppHandle,
     pub client: Client,
     pub cancel: CancellationToken,
-    pub parallel: usize,
     pub root: PathBuf,
 }
 
@@ -62,7 +63,6 @@ impl Ctx {
             app: app.clone(),
             client: state.client.clone(),
             cancel,
-            parallel: settings.parallel_downloads.max(1).into(),
             root: settings.game_dir.clone(),
         }
     }
@@ -88,7 +88,7 @@ impl Ctx {
         let client = &self.client;
         let cancel = &self.cancel;
         stream::iter(pending.into_iter().map(Ok::<Task, anyhow::Error>))
-            .try_for_each_concurrent(self.parallel, |task| async move {
+            .try_for_each_concurrent(PARALLEL_DOWNLOADS, |task| async move {
                 fetch(client, &task, cancel, reporter).await?;
                 reporter.done.fetch_add(1, Ordering::Relaxed);
                 reporter.emit(true);

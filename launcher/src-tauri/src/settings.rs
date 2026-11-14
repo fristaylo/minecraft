@@ -15,7 +15,6 @@ pub struct Settings {
     pub after_launch: AfterLaunch,
     pub console: bool,
     pub game_dir: PathBuf,
-    pub parallel_downloads: u8,
     pub auto_join: bool,
 }
 
@@ -73,7 +72,6 @@ impl Default for Settings {
                 .map(PathBuf::from)
                 .unwrap_or_default()
                 .join(".agon-launcher"),
-            parallel_downloads: 8,
             auto_join: false,
         }
     }

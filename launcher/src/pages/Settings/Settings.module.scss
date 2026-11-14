@@ -197,18 +197,6 @@
   font-size: 12.5px;
 }
 
-.parallel {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  flex: 0 1 260px;
-  min-width: 200px;
-
-  b {
-    width: 22px;
-  }
-}
-
 @container win (min-width: 1500px) {
   .sets {
     max-width: 960px;

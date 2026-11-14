@@ -76,7 +76,6 @@ export type Settings = {
   after_launch: 'close' | 'hide' | 'keep';
   console: boolean;
   game_dir: string;
-  parallel_downloads: number;
   auto_join: boolean;
 };
 
