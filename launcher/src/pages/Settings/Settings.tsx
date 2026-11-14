@@ -7,6 +7,7 @@ import { Icon } from '@components/Icon/Icon';
 import { UpdateInstall } from '@components/UpdateInstall/UpdateInstall';
 import { checkUpdate, errorText, type Settings as SettingsData } from '@/api';
 import { modCount, useGame } from '@/context/Game';
+import { isMac } from '@/format';
 import { useSettings } from '@/context/Settings';
 import { useToast } from '@/context/Toast';
 import s from './Settings.module.scss';
@@ -215,15 +216,17 @@ function Behaviour() {
           ))}
         </div>
       </Row>
-      <Row title="Консоль игры" hint="Окно с логом, помогает разобраться с вылетами">
-        <input
-          type="checkbox"
-          className="sw"
-          checked={settings.console}
-          aria-label="Консоль игры"
-          onChange={(event) => update({ console: event.target.checked })}
-        />
-      </Row>
+      {!isMac && (
+        <Row title="Консоль игры" hint="Окно с логом, помогает разобраться с вылетами">
+          <input
+            type="checkbox"
+            className="sw"
+            checked={settings.console}
+            aria-label="Консоль игры"
+            onChange={(event) => update({ console: event.target.checked })}
+          />
+        </Row>
+      )}
     </div>
   );
 }

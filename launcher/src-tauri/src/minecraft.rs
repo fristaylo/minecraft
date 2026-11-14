@@ -387,7 +387,7 @@ impl Library {
     }
 
     fn native_item(&self) -> Option<Item> {
-        let classifier = self.natives.as_ref()?.get("windows")?.replace("${arch}", "64");
+        let classifier = self.natives.as_ref()?.get(OS)?.replace("${arch}", "64");
         let artifact = self.downloads.as_ref()?.classifiers.as_ref()?.get(&classifier)?;
         Some(Item {
             rel: artifact
@@ -404,10 +404,20 @@ impl Library {
 impl Rule {
     fn matches(&self) -> bool {
         let os = self.os.as_ref().is_none_or(|os| {
-            os.name.as_deref().is_none_or(|n| n == "windows")
-                && os.arch.as_deref().is_none_or(|a| a == "x64" || a == "x86_64")
+            os.name.as_deref().is_none_or(|n| n == OS)
+                && os.arch.as_deref().is_none_or(arch_matches)
         });
         os && self.features.as_ref().is_none_or(|f| f.values().all(|v| !v))
+    }
+}
+
+const OS: &str = if cfg!(target_os = "macos") { "osx" } else { "windows" };
+
+fn arch_matches(arch: &str) -> bool {
+    if cfg!(target_arch = "aarch64") {
+        arch == "arm64"
+    } else {
+        arch == "x64" || arch == "x86_64"
     }
 }
 

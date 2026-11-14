@@ -1,8 +1,10 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Icon } from '@components/Icon/Icon';
+import { isMac } from '@/format';
 import s from './Titlebar.module.scss';
 
 export function WindowButtons() {
+  if (isMac) return null;
   return (
     <div className={s.winbtns}>
       <button className={s.winbtn} type="button" aria-label="Свернуть" onClick={() => void getCurrentWindow().minimize()}>

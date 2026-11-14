@@ -28,7 +28,13 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 sysinfo = "0.33"
 base64 = "0.22"
 notify = "7"
+
+[target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.10"
+core-graphics = "0.25"
 
 [profile.release]
 lto = true

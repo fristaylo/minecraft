@@ -1,6 +1,7 @@
 import type { Pack, ServerStatus } from '@/api';
 import { Blocks } from '@components/Loaders/Loaders';
 import { useGame } from '@/context/Game';
+import { isMac } from '@/format';
 import { WindowButtons } from './WindowButtons';
 import s from './Titlebar.module.scss';
 
@@ -9,7 +10,7 @@ export function Titlebar() {
   const nameOf = (packId: string) => packs?.find(({ pack }) => pack.id === packId)?.pack.name;
 
   return (
-    <div className={s.titlebar} data-tauri-drag-region>
+    <div className={`${s.titlebar} ${isMac ? s.mac : ''}`} data-tauri-drag-region>
       <div className={s.status}>
         {run ? (
           <>

@@ -68,10 +68,7 @@ impl Default for Settings {
             jvm_args: String::new(),
             after_launch: AfterLaunch::default(),
             console: false,
-            game_dir: std::env::var_os("APPDATA")
-                .map(PathBuf::from)
-                .unwrap_or_default()
-                .join(".agon-launcher"),
+            game_dir: default_game_dir(),
             auto_join: false,
         }
     }
@@ -125,4 +122,18 @@ fn write(app: &AppHandle, settings: &Settings) -> anyhow::Result<()> {
     std::fs::create_dir_all(&dir)?;
     std::fs::write(dir.join("settings.json"), serde_json::to_vec_pretty(settings)?)?;
     Ok(())
+}
+
+fn default_game_dir() -> PathBuf {
+    if cfg!(target_os = "macos") {
+        std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .unwrap_or_default()
+            .join("Library/Application Support/.agon-launcher")
+    } else {
+        std::env::var_os("APPDATA")
+            .map(PathBuf::from)
+            .unwrap_or_default()
+            .join(".agon-launcher")
+    }
 }

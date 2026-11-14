@@ -31,7 +31,7 @@ import {
 import { useGame } from '@/context/Game';
 import { useSettings } from '@/context/Settings';
 import { useToast } from '@/context/Toast';
-import { dependentsOf, fileName, fileTitle, formatLoader, modsWord } from '@/format';
+import { dependentsOf, fileName, fileTitle, formatLoader, instanceDir, modsWord } from '@/format';
 import { useAttempt } from './attempt';
 import { ConfigList, FilesTable, type ManualState } from './FilesTable';
 import { Finder, formatDownloads } from './Finder';
@@ -213,7 +213,7 @@ function Content({
   }
 
   async function addConfigs() {
-    const root = `${settings.game_dir}\\instances\\${pack.id}`;
+    const root = instanceDir(settings.game_dir, pack.id);
     await attempt(async () => {
       const picked = await open({ multiple: true, defaultPath: root });
       if (!picked) return;

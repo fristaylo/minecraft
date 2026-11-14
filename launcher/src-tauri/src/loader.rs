@@ -11,6 +11,7 @@ use crate::minecraft::{maven_path, read_json, VersionJson};
 
 const META_URL: &str = "https://launcher-meta.modrinth.com";
 const GAME_VERSION_PLACEHOLDER: &str = "${modrinth.gameVersion}";
+#[cfg(windows)]
 pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
@@ -150,8 +151,9 @@ pub async fn run_processors(
             .arg(std::env::join_paths(classpath)?)
             .arg(main_class(&jar)?)
             .args(processor.args.iter().map(|a| token(a, &libs, &data)))
-            .current_dir(&ctx.root)
-            .creation_flags(CREATE_NO_WINDOW);
+            .current_dir(&ctx.root);
+        #[cfg(windows)]
+        command.creation_flags(CREATE_NO_WINDOW);
         let output = command.output().await?;
         if !output.status.success() {
             bail!(

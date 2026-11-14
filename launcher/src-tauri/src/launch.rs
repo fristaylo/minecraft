@@ -7,18 +7,25 @@ use std::{
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio_util::sync::CancellationToken;
+#[cfg(windows)]
 use windows_sys::core::BOOL;
+#[cfg(windows)]
 use windows_sys::Win32::Foundation::{HWND, LPARAM};
+#[cfg(windows)]
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     EnumWindows, GetWindowThreadProcessId, IsWindowVisible,
 };
 
 use crate::download::Ctx;
-use crate::loader::{LoaderKind, CREATE_NO_WINDOW};
+#[cfg(windows)]
+use crate::loader::CREATE_NO_WINDOW;
+use crate::loader::LoaderKind;
 use crate::settings::{AfterLaunch, Settings, WindowMode};
 use crate::{authlib, java, loader, minecraft, AppState};
 
+#[cfg(windows)]
 const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
+const CLASSPATH_SEPARATOR: &str = if cfg!(windows) { ";" } else { ":" };
 const WINDOW_POLL: Duration = Duration::from_millis(500);
 const WINDOW_TIMEOUT: Duration = Duration::from_secs(180);
 const DEFAULT_JVM_FLAGS: [&str; 8] = [
@@ -125,7 +132,7 @@ async fn prepare(
         .iter()
         .map(|p| p.display().to_string())
         .collect::<Vec<_>>()
-        .join(";");
+        .join(CLASSPATH_SEPARATOR);
     let vars = [
         ("auth_player_name", auth.name.clone()),
         ("version_name", version.id.clone()),
@@ -151,7 +158,7 @@ async fn prepare(
         ("launcher_name", "launcher".to_owned()),
         ("launcher_version", env!("CARGO_PKG_VERSION").to_owned()),
         ("classpath", classpath),
-        ("classpath_separator", ";".to_owned()),
+        ("classpath_separator", CLASSPATH_SEPARATOR.to_owned()),
         (
             "library_directory",
             ctx.root.join("libraries").display().to_string(),
@@ -160,20 +167,26 @@ async fn prepare(
 
     let (jvm, game) = match &version.arguments {
         Some(a) => (minecraft::expand(&a.jvm), minecraft::expand(&a.game)),
-        None => (
-            vec![
+        None => {
+            let mut jvm = vec![
                 "-Djava.library.path=${natives_directory}".to_owned(),
                 "-cp".to_owned(),
                 "${classpath}".to_owned(),
-            ],
-            version
-                .minecraft_arguments
-                .as_deref()
-                .unwrap_or_default()
-                .split_whitespace()
-                .map(str::to_owned)
-                .collect(),
-        ),
+            ];
+            if cfg!(target_os = "macos") {
+                jvm.push("-XstartOnFirstThread".to_owned());
+            }
+            (
+                jvm,
+                version
+                    .minecraft_arguments
+                    .as_deref()
+                    .unwrap_or_default()
+                    .split_whitespace()
+                    .map(str::to_owned)
+                    .collect(),
+            )
+        }
     };
     let xmx = (settings.ram_gb * 1024.0) as u32;
     args.push(format!("-Xmx{xmx}M"));
@@ -247,20 +260,23 @@ async fn spawn(
     stop: CancellationToken,
     cancel: CancellationToken,
 ) -> Result<()> {
+    #[cfg(windows)]
     let exe = prepared.java.with_file_name(if settings.console {
         "java.exe"
     } else {
         "javaw.exe"
     });
-    let mut child = tokio::process::Command::new(exe)
-        .args(&prepared.args)
-        .current_dir(&prepared.game_dir)
-        .creation_flags(if settings.console {
-            CREATE_NEW_CONSOLE
-        } else {
-            CREATE_NO_WINDOW
-        })
-        .spawn()?;
+    #[cfg(not(windows))]
+    let exe = &prepared.java;
+    let mut command = tokio::process::Command::new(exe);
+    command.args(&prepared.args).current_dir(&prepared.game_dir);
+    #[cfg(windows)]
+    command.creation_flags(if settings.console {
+        CREATE_NEW_CONSOLE
+    } else {
+        CREATE_NO_WINDOW
+    });
+    let mut child = command.spawn()?;
     wait_window(&mut child, &stop, &cancel).await?;
     let _ = app.emit("game://started", ());
     let hide = settings.after_launch == AfterLaunch::Hide;
@@ -321,6 +337,7 @@ async fn wait_window(
     Ok(())
 }
 
+#[cfg(windows)]
 fn has_visible_window(pid: u32) -> bool {
     struct Search {
         pid: u32,
@@ -339,6 +356,56 @@ fn has_visible_window(pid: u32) -> bool {
     let mut search = Search { pid, found: false };
     unsafe { EnumWindows(Some(visit), &mut search as *mut Search as LPARAM) };
     search.found
+}
+
+#[cfg(target_os = "macos")]
+fn has_visible_window(pid: u32) -> bool {
+    use core_graphics::window::{
+        copy_window_info, kCGNullWindowID, kCGWindowListExcludeDesktopElements,
+        kCGWindowListOptionOnScreenOnly,
+    };
+    copy_window_info(
+        kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
+        kCGNullWindowID,
+    )
+    .is_some_and(|windows| {
+        windows
+            .iter()
+            .any(|window| is_game_window(*window, pid).unwrap_or(false))
+    })
+}
+
+#[cfg(target_os = "macos")]
+fn is_game_window(window: *const std::ffi::c_void, pid: u32) -> Option<bool> {
+    use core_foundation::{base::TCFType, dictionary::CFDictionary, string::CFString};
+    use core_graphics::window::{kCGWindowBounds, kCGWindowLayer, kCGWindowOwnerPID};
+    use std::ffi::c_void;
+
+    type Dict = CFDictionary<*const c_void, *const c_void>;
+    let window = unsafe { Dict::wrap_under_get_rule(window as _) };
+    let (owner, layer, bounds) = unsafe {
+        (
+            number(&window, kCGWindowOwnerPID as _)?,
+            number(&window, kCGWindowLayer as _)?,
+            Dict::wrap_under_get_rule(*window.find(kCGWindowBounds as *const c_void)? as _),
+        )
+    };
+    let width = number(&bounds, CFString::new("Width").as_concrete_TypeRef() as _)?;
+    let height = number(&bounds, CFString::new("Height").as_concrete_TypeRef() as _)?;
+    Some(owner as u32 == pid && layer == 0.0 && width > 1.0 && height > 1.0)
+}
+
+#[cfg(target_os = "macos")]
+fn number(
+    dict: &core_foundation::dictionary::CFDictionary<
+        *const std::ffi::c_void,
+        *const std::ffi::c_void,
+    >,
+    key: *const std::ffi::c_void,
+) -> Option<f64> {
+    use core_foundation::{base::TCFType, number::CFNumber};
+    let value = dict.find(key)?;
+    unsafe { CFNumber::wrap_under_get_rule(*value as _) }.to_f64()
 }
 
 fn set_window_visible(app: &AppHandle, visible: bool) {

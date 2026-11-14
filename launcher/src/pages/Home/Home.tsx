@@ -10,7 +10,7 @@ import { modCount, packStatus, STEPS, useGame, type PackInfo } from '@/context/G
 import { useAccount } from '@/context/Session';
 import { useSettings } from '@/context/Settings';
 import { useToast } from '@/context/Toast';
-import { formatLoader, formatSize, modsWord } from '@/format';
+import { formatLoader, formatSize, instanceDir, modsWord } from '@/format';
 import s from './Home.module.scss';
 
 export function Home() {
@@ -250,7 +250,7 @@ export function Home() {
 
   async function openFolder() {
     try {
-      await openPath(`${settings.game_dir}\\instances\\${pack.id}`);
+      await openPath(instanceDir(settings.game_dir, pack.id));
     } catch (error) {
       toast('Не удалось открыть папку', errorText(error), { kind: 'warn' });
     }

@@ -49,3 +49,10 @@ export function dependentsOf(files: ManifestFile[], file: ManifestFile): Manifes
 export function pathName(path: string): string {
   return path.split(/[\\/]/).pop() ?? path;
 }
+
+export const isMac = navigator.userAgent.includes('Mac');
+
+export function instanceDir(gameDir: string, packId: Pack['id']): string {
+  const sep = isMac ? '/' : '\\';
+  return `${gameDir}${sep}instances${sep}${packId}`;
+}
