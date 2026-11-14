@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "atlasminimap",
+  "version": "${version}",
+  "name": "Atlas Minimap",
+  "description": "HUD minimap in the top-right corner, rendered with Antique Atlas textures and data.",
+  "authors": [
+    "Agon"
+  ],
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "agon.minimap.AtlasMinimapClient"
+    ],
+    "modmenu": [
+      "agon.minimap.config.ModMenuIntegration"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "antique_atlas": "3.1.2+1.21",
+    "surveyor": ">=1.2.4",
+    "cloth-config": ">=15"
+  }
+}

@@ -1,6 +1,6 @@
 import { asc, desc, eq, and } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { rm } from 'node:fs/promises'
+import { chown, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fail, requireUser, type AppEnv } from './accounts'
 import { config } from './config'
@@ -255,6 +255,9 @@ async function updateGameServer(pack: Pack, manifest: Manifest): Promise<string[
     await Promise.all(previous.map((path) => rm(join(root, path), { force: true })))
     await Promise.all(files.map((file) => Bun.write(join(root, file.path), Bun.file(objectPath(file.sha1)))))
     await Bun.write(managedPath, JSON.stringify(files.map((file) => file.path)))
+    const { uid, gid } = await stat(root)
+    const owned = new Set([...files.map((file) => file.path), '.managed.json'].flatMap(pathPrefixes))
+    await Promise.all([...owned].map((path) => chown(join(root, path), uid, gid)))
   } catch (error) {
     console.error('Game server file sync failed', error)
     return [...warnings, `Failed to sync game server files: ${error instanceof Error ? error.message : String(error)}`]
@@ -267,4 +270,8 @@ async function updateGameServer(pack: Pack, manifest: Manifest): Promise<string[
     warnings.push(`Failed to restart game server: ${error instanceof Error ? error.message : String(error)}`)
   }
   return warnings
+}
+
+function pathPrefixes(path: string): string[] {
+  return path.split('/').map((_, index, parts) => parts.slice(0, index + 1).join('/'))
 }

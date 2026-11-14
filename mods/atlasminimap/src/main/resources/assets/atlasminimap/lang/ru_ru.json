@@ -1,0 +1,15 @@
+{
+  "text.autoconfig.atlasminimap.title": "Атлас-миникарта",
+  "text.autoconfig.atlasminimap.option.enabled": "Показывать миникарту",
+  "text.autoconfig.atlasminimap.option.size": "Размер",
+  "text.autoconfig.atlasminimap.option.zoom": "Масштаб тайла",
+  "text.autoconfig.atlasminimap.option.showCoordinates": "Показывать координаты",
+  "text.autoconfig.atlasminimap.option.size.SMALL": "Малый",
+  "text.autoconfig.atlasminimap.option.size.MEDIUM": "Средний",
+  "text.autoconfig.atlasminimap.option.size.LARGE": "Крупный",
+  "text.autoconfig.atlasminimap.option.zoom.ONE": "1 чанк",
+  "text.autoconfig.atlasminimap.option.zoom.TWO": "2×2 чанка",
+  "text.autoconfig.atlasminimap.option.zoom.FOUR": "4×4 чанка",
+  "key.atlasminimap.toggle": "Показать/скрыть миникарту",
+  "key.categories.atlasminimap": "Атлас-миникарта"
+}
