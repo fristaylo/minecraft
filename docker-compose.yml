@@ -74,7 +74,7 @@ services:
             ENABLE_RCON: "TRUE"
             RCON_PASSWORD: ${RCON_PASSWORD}
             MEMORY: ${MC_MEMORY:-4G}
-            JVM_OPTS: -javaagent:/data/authlib-injector.jar=http://api:3000/api/yggdrasil/
+            JVM_OPTS: -javaagent:/data/authlib-injector.jar=http://api:3000/api/yggdrasil/ -Dsun.net.client.defaultConnectTimeout=10000 -Dsun.net.client.defaultReadTimeout=10000
         volumes:
             - ./data/mc:/data
         depends_on:
