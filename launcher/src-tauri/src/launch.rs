@@ -1,8 +1,16 @@
 use anyhow::{bail, Result};
 use serde::{Deserialize, Deserializer, Serialize};
-use std::path::PathBuf;
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio_util::sync::CancellationToken;
+use windows_sys::core::BOOL;
+use windows_sys::Win32::Foundation::{HWND, LPARAM};
+use windows_sys::Win32::UI::WindowsAndMessaging::{
+    EnumWindows, GetWindowThreadProcessId, IsWindowVisible,
+};
 
 use crate::download::Ctx;
 use crate::loader::{LoaderKind, CREATE_NO_WINDOW};
@@ -10,6 +18,8 @@ use crate::settings::{AfterLaunch, Settings, WindowMode};
 use crate::{authlib, java, loader, minecraft, AppState};
 
 const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
+const WINDOW_POLL: Duration = Duration::from_millis(500);
+const WINDOW_TIMEOUT: Duration = Duration::from_secs(180);
 
 #[derive(Deserialize)]
 pub struct Instance {
@@ -70,7 +80,8 @@ pub async fn launch(
             return Err(format!("{e:#}"));
         }
     };
-    if let Err(e) = spawn(app, &settings, prepared, stop) {
+    ctx.progress("game", "Открываем Minecraft…", 0, 0);
+    if let Err(e) = spawn(app, &settings, prepared, stop, ctx.cancel).await {
         state.game_stop.lock().unwrap().take();
         return Err(format!("{e:#}"));
     }
@@ -178,14 +189,15 @@ async fn prepare(
     args.extend(jvm.iter().map(|a| fill(a, &vars)));
     args.push(version.main_class.clone());
     args.extend(game.iter().map(|a| fill(a, &vars)));
-    match settings.window.mode {
-        WindowMode::Fullscreen => args.push("--fullscreen".to_owned()),
-        WindowMode::Window => args.extend([
+    let fullscreen = matches!(settings.window.mode, WindowMode::Fullscreen);
+    write_fullscreen(&game_dir, fullscreen).await?;
+    if !fullscreen {
+        args.extend([
             "--width".to_owned(),
             settings.window.width.to_string(),
             "--height".to_owned(),
             settings.window.height.to_string(),
-        ]),
+        ]);
     }
     if let Some(server) = instance.server.as_ref().filter(|_| settings.auto_join) {
         args.push("--quickPlayMultiplayer".to_owned());
@@ -202,11 +214,12 @@ async fn prepare(
     })
 }
 
-fn spawn(
+async fn spawn(
     app: AppHandle,
     settings: &Settings,
     prepared: Prepared,
     stop: CancellationToken,
+    cancel: CancellationToken,
 ) -> Result<()> {
     let exe = prepared.java.with_file_name(if settings.console {
         "java.exe"
@@ -222,6 +235,7 @@ fn spawn(
             CREATE_NO_WINDOW
         })
         .spawn()?;
+    wait_window(&mut child, &stop, &cancel).await?;
     let _ = app.emit("game://started", ());
     let hide = settings.after_launch == AfterLaunch::Hide;
     match settings.after_launch {
@@ -249,6 +263,58 @@ fn spawn(
     Ok(())
 }
 
+async fn wait_window(
+    child: &mut tokio::process::Child,
+    stop: &CancellationToken,
+    cancel: &CancellationToken,
+) -> Result<()> {
+    let pid = child.id().unwrap_or_default();
+    let deadline = tokio::time::Instant::now() + WINDOW_TIMEOUT;
+    while tokio::time::Instant::now() < deadline {
+        if let Some(status) = child.try_wait()? {
+            let code = status
+                .code()
+                .map_or_else(|| "?".to_owned(), |c| c.to_string());
+            bail!("Игра завершилась до открытия окна (код {code})");
+        }
+        if has_visible_window(pid) {
+            return Ok(());
+        }
+        tokio::select! {
+            () = tokio::time::sleep(WINDOW_POLL) => {}
+            () = stop.cancelled() => {
+                let _ = child.kill().await;
+                bail!("cancelled");
+            }
+            () = cancel.cancelled() => {
+                let _ = child.kill().await;
+                bail!("cancelled");
+            }
+        }
+    }
+    Ok(())
+}
+
+fn has_visible_window(pid: u32) -> bool {
+    struct Search {
+        pid: u32,
+        found: bool,
+    }
+    unsafe extern "system" fn visit(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        let search = &mut *(lparam as *mut Search);
+        let mut owner = 0;
+        GetWindowThreadProcessId(hwnd, &mut owner);
+        if owner == search.pid && IsWindowVisible(hwnd) != 0 {
+            search.found = true;
+            return 0;
+        }
+        1
+    }
+    let mut search = Search { pid, found: false };
+    unsafe { EnumWindows(Some(visit), &mut search as *mut Search as LPARAM) };
+    search.found
+}
+
 fn set_window_visible(app: &AppHandle, visible: bool) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = if visible {
@@ -267,4 +333,31 @@ fn fill(template: &str, vars: &[(&str, String)]) -> String {
 
 fn null_as_default<'de, D: Deserializer<'de>>(deserializer: D) -> Result<String, D::Error> {
     Ok(Option::<String>::deserialize(deserializer)?.unwrap_or_default())
+}
+
+async fn write_fullscreen(game_dir: &Path, fullscreen: bool) -> Result<()> {
+    let path = game_dir.join("options.txt");
+    let line = format!("fullscreen:{fullscreen}");
+    let existing = match tokio::fs::read_to_string(&path).await {
+        Ok(s) => s,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => return Err(e.into()),
+    };
+    let mut found = false;
+    let mut lines: Vec<&str> = existing
+        .lines()
+        .map(|l| {
+            if l.starts_with("fullscreen:") {
+                found = true;
+                line.as_str()
+            } else {
+                l
+            }
+        })
+        .collect();
+    if !found {
+        lines.push(&line);
+    }
+    tokio::fs::write(&path, lines.join("\n") + "\n").await?;
+    Ok(())
 }

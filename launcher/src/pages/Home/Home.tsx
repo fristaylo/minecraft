@@ -222,15 +222,15 @@ export function Home() {
     }
     return (
       <>
-        <button className={`btn primary lg ${s.play}`} type="button" disabled={busy} onClick={() => void play(pack.id)}>
-          <Icon name={code === 'ready' ? 'play' : 'download'} size={20} stroke={2.2} />
-          {PLAY_LABEL[code]}
-        </button>
         {server && (
           <label className={`check ${s.autoJoin}`}>
             <input type="checkbox" className="sw" checked={settings.auto_join} onChange={(event) => update({ auto_join: event.target.checked })} /> Сразу на сервер
           </label>
         )}
+        <button className={`btn primary lg ${s.play}`} type="button" disabled={busy} onClick={() => void play(pack.id)}>
+          <Icon name={code === 'ready' ? 'play' : 'download'} size={20} stroke={2.2} />
+          {PLAY_LABEL[code]}
+        </button>
         {mods > 0 && (
           <button className="btn over lg" type="button" onClick={() => navigate('/mods')}>
             <Icon name="cube" size={18} />

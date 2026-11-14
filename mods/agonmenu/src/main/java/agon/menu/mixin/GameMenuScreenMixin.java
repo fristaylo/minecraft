@@ -1,6 +1,5 @@
 package agon.menu.mixin;
 
-import agon.menu.Panoramas;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import org.spongepowered.asm.mixin.Final;
@@ -20,7 +19,6 @@ public class GameMenuScreenMixin {
 	private void agonmenu$tint(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
 		if (showMenu) {
 			context.fill(0, 0, context.getScaledWindowWidth(), context.getScaledWindowHeight(), 0x400F0D14);
-			Panoramas.vignette(context, context.getScaledWindowWidth(), context.getScaledWindowHeight());
 		}
 	}
 }

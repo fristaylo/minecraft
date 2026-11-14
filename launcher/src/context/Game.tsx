@@ -50,6 +50,7 @@ const STAGES: Record<string, { step: number; label: string }> = {
   client: { step: 3, label: 'Клиент игры' },
   assets: { step: 3, label: 'Ресурсы' },
   authlib: { step: 4, label: 'Авторизация' },
+  game: { step: 4, label: 'Открываем Minecraft…' },
 };
 
 const GameContext = createContext<Game | null>(null);

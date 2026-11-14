@@ -31,7 +31,6 @@ public final class Panoramas {
 		float yaw = -elapsed / 1000.0F * DEGREES_PER_SECOND;
 		float pitch = (float) Math.sin(elapsed / 6000.0) * 5.0F + 25.0F;
 
-		context.fill(0, 0, width, height, 0xFF000000);
 		draw(current, pitch, yaw, 1.0F);
 		if (phase >= SLOT_MS - FADE_MS) {
 			draw(next, pitch, yaw, (phase - (SLOT_MS - FADE_MS)) / (float) FADE_MS);
@@ -41,7 +40,7 @@ public final class Panoramas {
 		vignette(context, width, height);
 	}
 
-	public static void vignette(DrawContext context, int width, int height) {
+	private static void vignette(DrawContext context, int width, int height) {
 		RenderSystem.enableBlend();
 		context.drawTexture(VIGNETTE, 0, 0, width, height, 0, 0, 128, 128, 128, 128);
 		RenderSystem.disableBlend();
