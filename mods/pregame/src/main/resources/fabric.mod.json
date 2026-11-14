@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "pregame",
+  "version": "${version}",
+  "name": "Pregame Lobby",
+  "description": "Лобби перед началом игры: пустое измерение с защищённым островом, кнопка старта для операторов и обратный отсчёт.",
+  "authors": [
+    "Agon"
+  ],
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "ru.pregame.Pregame"
+    ],
+    "client": [
+      "ru.pregame.client.PregameClient"
+    ]
+  },
+  "mixins": [
+    "pregame.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}

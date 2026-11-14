@@ -1,0 +1,8 @@
+{
+  "pregame.hud.waiting": "Waiting for the game to start",
+  "pregame.hud.starting": "The game is starting",
+  "pregame.hud.countdown": "Teleport to the world in",
+  "pregame.hud.started": "The game has started!",
+  "pregame.hud.welcome": "Welcome to the world",
+  "pregame.button.start": "Start game"
+}
