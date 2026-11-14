@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 @Mixin(KeyMapping.class)
 public abstract class KeyMappingMixin
 {
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", ordinal = 1))
+    @Redirect(method = "<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILjava/lang/String;)V", at = @At(value = "INVOKE", target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", ordinal = 1))
     private Object keepVanillaOnInit(Map<Object, Object> map, Object key, Object value)
     {
         return putKeepingVanilla(map, key, value);
