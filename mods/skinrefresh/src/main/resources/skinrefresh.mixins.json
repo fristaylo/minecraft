@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "agon.skinrefresh.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ServerChunkLoadingManagerInvoker"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

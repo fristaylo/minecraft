@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "skinrefresh",
+  "version": "${version}",
+  "name": "Skin Refresh",
+  "description": "Команда refreshskin: обновляет скин игрока у всех онлайн без перезахода. / Command refreshskin: updates a player's skin for everyone online without relogging.",
+  "authors": [
+    "Agon"
+  ],
+  "license": "All-Rights-Reserved",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "agon.skinrefresh.SkinRefresh"
+    ]
+  },
+  "mixins": [
+    "skinrefresh.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}

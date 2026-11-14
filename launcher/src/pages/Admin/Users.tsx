@@ -3,10 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Face } from '@components/Face/Face';
 import { Icon } from '@components/Icon/Icon';
 import { Blocks } from '@components/Loaders/Loaders';
-import { deleteUser, errorText, listUsers, setRole, type AdminUser, type Role } from '@/api';
+import { deleteUser, errorText, listUsers, setRole, type AdminUser, type Role, type Skin } from '@/api';
 import { useAccount, useSession } from '@/context/Session';
 import { useToast } from '@/context/Toast';
 import { useAttempt } from './attempt';
+import { SkinModal } from './SkinModal';
 import s from './Admin.module.scss';
 
 const ROLES: [Role, string][] = [
@@ -23,6 +24,7 @@ export function Users() {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [skinUserId, setSkinUserId] = useState<AdminUser['id'] | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -60,6 +62,7 @@ export function Users() {
 
   const requests = users.filter((user) => user.role === 'pending');
   const text = query.trim().toLowerCase();
+  const skinUser = users.find((user) => user.id === skinUserId);
   const shown = users.filter((user) => user.name.toLowerCase().includes(text));
 
   function warn(warning: string | undefined) {
@@ -78,6 +81,10 @@ export function Users() {
       }
       await load();
     });
+  }
+
+  function changeSkin(id: AdminUser['id'], skin: Skin | null) {
+    setUsers((current) => current && current.map((user) => (user.id === id ? { ...user, skin } : user)));
   }
 
   async function remove(user: AdminUser, declined: boolean) {
@@ -110,7 +117,7 @@ export function Users() {
           <div className={s.reqs}>
             {requests.map((user) => (
               <div key={user.id} className={s.rq}>
-                <Face account={{ name: user.name, skin: null }} size={36} />
+                <Face account={{ name: user.name, skin: user.skin }} size={36} />
                 <div className={s.rqMain}>
                   <b>{user.name}</b>
                   <span className={s.sub}>Регистрация: {formatDate(user.createdAt)}</span>
@@ -159,7 +166,7 @@ export function Users() {
                 <tr key={user.id}>
                   <td>
                     <div className={s.cm}>
-                      <Face account={{ name: user.name, skin: null }} size={32} />
+                      <Face account={{ name: user.name, skin: user.skin }} size={32} />
                       <b>{user.name}</b>
                     </div>
                   </td>
@@ -181,17 +188,23 @@ export function Users() {
                   <td>{user.whitelisted ? <span className="tag ok">Есть</span> : <span className="tag warn">Нет</span>}</td>
                   <td className="pct">{formatDate(user.createdAt)}</td>
                   <td className="hint">{user.lastLoginAt ? formatDate(user.lastLoginAt) : '—'}</td>
-                  <td>{user.hasSkin ? <span className="tag ok">Свой</span> : <span className="tag">Стандартный</span>}</td>
+                  <td>{user.skin ? <span className="tag ok">Свой</span> : <span className="tag">Стандартный</span>}</td>
                   <td>
-                    <button
-                      className="btn ghost icon sm"
-                      type="button"
-                      aria-label={`Удалить ${user.name}`}
-                      disabled={user.id === selfId}
-                      onClick={() => void remove(user, false)}
-                    >
-                      <Icon name="trash" size={16} />
-                    </button>
+                    <div className={s.acts}>
+                      <button className="btn ghost sm" type="button" aria-label={`Скин ${user.name}`} onClick={() => setSkinUserId(user.id)}>
+                        <Icon name="shirt" size={16} />
+                        Скин
+                      </button>
+                      <button
+                        className="btn ghost icon sm"
+                        type="button"
+                        aria-label={`Удалить ${user.name}`}
+                        disabled={user.id === selfId}
+                        onClick={() => void remove(user, false)}
+                      >
+                        <Icon name="trash" size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -205,6 +218,7 @@ export function Users() {
           </tbody>
         </table>
       </div>
+      {skinUser && <SkinModal user={skinUser} onChanged={(skin) => changeSkin(skinUser.id, skin)} onClose={() => setSkinUserId(null)} />}
     </>
   );
 }

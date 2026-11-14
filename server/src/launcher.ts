@@ -1,10 +1,24 @@
 import { createHash } from 'node:crypto'
+import { asc } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { authResponse, clearSkin, fail, requireUser, saveSkin, skinOf, unsigned, type AppEnv } from './accounts'
+import {
+  authResponse,
+  catalogItem,
+  clearSkin,
+  fail,
+  findCatalogSkin,
+  parseSkinModel,
+  requireUser,
+  saveSkin,
+  setSkin,
+  skinOf,
+  unsigned,
+  type AppEnv,
+} from './accounts'
 import { whitelist } from './admin'
 import { config } from './config'
 import { db } from './db'
-import { skinModelEnum, users } from './db/schema'
+import { skins, users } from './db/schema'
 
 export const launcher = new Hono<AppEnv>()
 
@@ -41,15 +55,24 @@ launcher.get('/me', requireUser, (c) => {
 
 launcher.put('/me/skin', requireUser, async (c) => {
   const { file, model } = await c.req.parseBody()
-  const skinModel = skinModelEnum.enumValues.find((value) => value === model)
-  if (!(file instanceof File) || !skinModel || !(await saveSkin(c.var.user.id, file, skinModel))) {
+  const skinModel = parseSkinModel(model)
+  if (!(file instanceof File) || !skinModel || !(await saveSkin(c.var.user, file, skinModel))) {
     return fail(c, 400, 'IllegalArgumentException', 'Invalid skin: expected PNG 64x64 or 64x32 and model classic or slim.')
   }
   return c.body(null, 204)
 })
 
 launcher.delete('/me/skin', requireUser, async (c) => {
-  await clearSkin(c.var.user.id)
+  await clearSkin(c.var.user)
+  return c.body(null, 204)
+})
+
+launcher.get('/skins', requireUser, async (c) => c.json((await db.select().from(skins).orderBy(asc(skins.createdAt))).map(catalogItem)))
+
+launcher.put('/me/skin/catalog/:id', requireUser, async (c) => {
+  const skin = await findCatalogSkin(c.req.param('id'))
+  if (!skin) return fail(c, 404, 'NotFoundException', 'Skin not found.')
+  await setSkin(c.var.user, skin.hash, skin.model)
   return c.body(null, 204)
 })
 

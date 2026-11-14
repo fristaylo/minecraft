@@ -16,7 +16,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_opener::OpenerExt;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::api::{api as endpoint, fetch, send, CmdError, Kind, Manifest, ManifestFile, Meta, Policy, Role, Side, Source};
+use crate::api::{api as endpoint, fetch, skin_form, send, CmdError, Kind, Manifest, ManifestFile, Meta, Policy, Role, Side, Source};
 use crate::catalog::{self, Http, Project, Target, Update, Version};
 use crate::launch::Loader;
 use crate::loader::LoaderKind;
@@ -512,6 +512,108 @@ pub async fn set_role(
 pub async fn delete_user(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<Value, CmdError> {
     let token = guard(&app, &state).await?;
     Ok(fetch(state.client.delete(admin_url(&format!("/users/{id}"))).bearer_auth(token)).await?)
+}
+
+#[tauri::command]
+pub async fn mineskin_search(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    query: Option<String>,
+    after: Option<String>,
+) -> Result<Value, CmdError> {
+    let token = guard(&app, &state).await?;
+    let mut request = state.client.get(admin_url("/skins/mineskin")).bearer_auth(token);
+    if let Some(query) = query {
+        request = request.query(&[("query", query)]);
+    }
+    if let Some(after) = after {
+        request = request.query(&[("after", after)]);
+    }
+    Ok(fetch(request).await?)
+}
+
+#[tauri::command]
+pub async fn mojang_skin(app: AppHandle, state: State<'_, AppState>, name: String) -> Result<Value, CmdError> {
+    let token = guard(&app, &state).await?;
+    Ok(fetch(state.client.get(admin_url(&format!("/skins/player/{name}"))).bearer_auth(token)).await?)
+}
+
+#[tauri::command]
+pub async fn import_catalog_skin(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    source: String,
+    skin_id: Option<String>,
+    name: Option<String>,
+) -> Result<Value, CmdError> {
+    let token = guard(&app, &state).await?;
+    let body = json!({ "source": source, "id": skin_id, "name": name });
+    Ok(fetch(state.client.post(admin_url("/skins/import")).bearer_auth(token).json(&body)).await?)
+}
+
+#[tauri::command]
+pub async fn upload_catalog_skin(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    path: String,
+    model: String,
+    name: String,
+) -> Result<Value, CmdError> {
+    let token = guard(&app, &state).await?;
+    let form = skin_form(tokio::fs::read(path).await?, model)?.text("name", name);
+    Ok(fetch(state.client.post(admin_url("/skins/upload")).bearer_auth(token).multipart(form)).await?)
+}
+
+#[tauri::command]
+pub async fn delete_catalog_skin(app: AppHandle, state: State<'_, AppState>, skin_id: u32) -> Result<(), CmdError> {
+    let token = guard(&app, &state).await?;
+    send(state.client.delete(admin_url(&format!("/skins/{skin_id}"))).bearer_auth(token)).await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_user_skin_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    path: String,
+    model: String,
+) -> Result<Value, CmdError> {
+    let token = guard(&app, &state).await?;
+    let form = skin_form(tokio::fs::read(path).await?, model)?;
+    Ok(fetch(state.client.put(admin_url(&format!("/users/{id}/skin"))).bearer_auth(token).multipart(form)).await?)
+}
+
+#[tauri::command]
+pub async fn set_user_skin_catalog(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    skin_id: u32,
+) -> Result<Value, CmdError> {
+    let token = guard(&app, &state).await?;
+    Ok(fetch(state.client.put(admin_url(&format!("/users/{id}/skin/catalog/{skin_id}"))).bearer_auth(token)).await?)
+}
+
+#[tauri::command]
+pub async fn set_user_skin_import(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    source: String,
+    skin_id: Option<String>,
+    name: Option<String>,
+) -> Result<Value, CmdError> {
+    let token = guard(&app, &state).await?;
+    let body = json!({ "source": source, "id": skin_id, "name": name });
+    Ok(fetch(state.client.put(admin_url(&format!("/users/{id}/skin/import"))).bearer_auth(token).json(&body)).await?)
+}
+
+#[tauri::command]
+pub async fn reset_user_skin(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<(), CmdError> {
+    let token = guard(&app, &state).await?;
+    send(state.client.delete(admin_url(&format!("/users/{id}/skin"))).bearer_auth(token)).await?;
+    Ok(())
 }
 
 async fn resolve(

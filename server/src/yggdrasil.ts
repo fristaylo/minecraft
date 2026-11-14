@@ -142,7 +142,7 @@ yggdrasil.post('/api/profiles/minecraft', async (c) => {
 yggdrasil.put('/api/user/profile/:uuid/skin', requireUser, async (c) => {
   if (c.req.param('uuid') !== unsigned(c.var.user.id)) return fail(c, 403, 'ForbiddenOperationException', 'Forbidden.')
   const { file, model } = await c.req.parseBody()
-  if (!(file instanceof File) || !(await saveSkin(c.var.user.id, file, model === 'slim' ? 'slim' : 'classic'))) {
+  if (!(file instanceof File) || !(await saveSkin(c.var.user, file, model === 'slim' ? 'slim' : 'classic'))) {
     return fail(c, 400, 'IllegalArgumentException', 'Invalid skin.')
   }
   return c.body(null, 204)
@@ -150,7 +150,7 @@ yggdrasil.put('/api/user/profile/:uuid/skin', requireUser, async (c) => {
 
 yggdrasil.delete('/api/user/profile/:uuid/skin', requireUser, async (c) => {
   if (c.req.param('uuid') !== unsigned(c.var.user.id)) return fail(c, 403, 'ForbiddenOperationException', 'Forbidden.')
-  await clearSkin(c.var.user.id)
+  await clearSkin(c.var.user)
   return c.body(null, 204)
 })
 

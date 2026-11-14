@@ -5,11 +5,13 @@ export type SkinModel = 'classic' | 'slim';
 export type Theme = 'day' | 'dusk' | 'night' | 'dawn' | 'snow' | 'desert' | 'nether' | 'end';
 export type LoaderType = 'vanilla' | 'fabric' | 'forge' | 'neoforge';
 
+export type Skin = { url: string; model: SkinModel };
+
 export type Me = {
   id: string;
   name: string;
   role: Role;
-  skin: { url: string; model: SkinModel } | null;
+  skin: Skin | null;
 };
 
 export type Pack = {
@@ -97,7 +99,7 @@ export type AdminUser = {
   role: Role;
   createdAt: string;
   lastLoginAt: string | null;
-  hasSkin: boolean;
+  skin: Skin | null;
   whitelisted: boolean;
 };
 
@@ -117,6 +119,8 @@ export const logout = () => invoke<void>('logout');
 export const currentAccount = () => invoke<Me | null>('current_account');
 export const uploadSkin = (path: string, model: SkinModel) => invoke<Me>('upload_skin', { path, model });
 export const resetSkin = () => invoke<Me>('reset_skin');
+export const listSkins = () => invoke<CatalogSkin[]>('list_skins');
+export const setCatalogSkin = (id: CatalogSkin['id']) => invoke<Me>('set_catalog_skin', { id });
 
 export const getSettings = () => invoke<Settings>('get_settings');
 export const saveSettings = (settings: Settings) => invoke<void>('save_settings', { settings });
@@ -180,6 +184,25 @@ export type ProjectDetails = {
 type FileRef = { packId: Pack['id']; path: ManifestFile['path'] };
 
 export const setOptional = (args: FileRef & { enabled: boolean }) => invoke<void>('set_optional', args);
+
+export type CatalogSkin = Skin & { id: number; name: string };
+export type SkinSource = 'mineskin' | 'mojang';
+export type SkinImport = { source: SkinSource; skinId?: string; name?: string };
+export type MineskinItem = { id: string; name: string; texture: string; previewUrl: string };
+export type MineskinPage = { items: MineskinItem[]; next: string | null };
+export type MojangSkin = Pick<MineskinItem, 'name' | 'texture' | 'previewUrl'> & Pick<Skin, 'model'>;
+type SkinFile = { path: string; model: SkinModel };
+
+export const mineskinSearch = (args: { query?: string; after?: string }) => invoke<MineskinPage>('mineskin_search', args);
+export const mojangSkin = (name: string) => invoke<MojangSkin>('mojang_skin', { name });
+export const importCatalogSkin = (args: SkinImport) => invoke<CatalogSkin>('import_catalog_skin', args);
+export const uploadCatalogSkin = (args: SkinFile & Pick<CatalogSkin, 'name'>) => invoke<CatalogSkin>('upload_catalog_skin', args);
+export const deleteCatalogSkin = (skinId: CatalogSkin['id']) => invoke<void>('delete_catalog_skin', { skinId });
+export const setUserSkinFile = (args: Pick<AdminUser, 'id'> & SkinFile) => invoke<Skin>('set_user_skin_file', args);
+export const setUserSkinCatalog = (args: Pick<AdminUser, 'id'> & { skinId: CatalogSkin['id'] }) =>
+  invoke<Skin>('set_user_skin_catalog', args);
+export const setUserSkinImport = (args: Pick<AdminUser, 'id'> & SkinImport) => invoke<Skin>('set_user_skin_import', args);
+export const resetUserSkin = (id: AdminUser['id']) => invoke<void>('reset_user_skin', { id });
 
 export const listUsers = () => invoke<AdminUser[]>('list_users');
 export const setRole = (args: Pick<AdminUser, 'id' | 'role'>) => invoke<Warning>('set_role', args);

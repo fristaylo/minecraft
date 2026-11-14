@@ -5,6 +5,7 @@ import { curseforge } from './curseforge'
 import { migrate } from './db'
 import { launcher } from './launcher'
 import { packRoutes } from './packs'
+import { skinPreview } from './skins'
 import { serverStatus } from './status'
 import { yggdrasil } from './yggdrasil'
 
@@ -21,6 +22,7 @@ api.route('/admin', admin)
 api.route('/cf', curseforge)
 api.route('/packs', packRoutes)
 api.route('/server', serverStatus)
+api.route('/skins/preview', skinPreview)
 api.route('/', launcher)
 
 const app = new Hono({ strict: false })

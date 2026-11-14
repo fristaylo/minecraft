@@ -433,3 +433,35 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.skinGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.skinSide {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.skinActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.acts {
+  display: flex;
+  gap: 6px;
+}
+
+@container win (max-width: 900px) {
+  .skinGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

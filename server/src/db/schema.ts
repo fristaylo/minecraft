@@ -7,6 +7,7 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
+  serial,
   text,
   timestamp,
   uniqueIndex,
@@ -16,6 +17,7 @@ import {
 
 export const roleEnum = pgEnum('role', ['pending', 'user', 'admin'])
 export const skinModelEnum = pgEnum('skin_model', ['classic', 'slim'])
+export const skinSourceEnum = pgEnum('skin_source', ['mineskin', 'mojang', 'upload'])
 
 export const users = pgTable(
   'users',
@@ -45,7 +47,22 @@ export const tokens = pgTable(
   (t) => [index('tokens_user_id_idx').on(t.userId)],
 )
 
+export const skins = pgTable(
+  'skins',
+  {
+    id: serial().primaryKey(),
+    name: varchar({ length: 64 }).notNull(),
+    hash: varchar({ length: 64 }).notNull(),
+    model: skinModelEnum().notNull(),
+    source: skinSourceEnum().notNull(),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('skins_hash_model_idx').on(t.hash, t.model)],
+)
+
 export type User = typeof users.$inferSelect
+export type CatalogSkin = typeof skins.$inferSelect
 
 export const themeEnum = pgEnum('theme', ['day', 'dusk', 'night', 'dawn', 'snow', 'desert', 'nether', 'end'])
 export const loaderEnum = pgEnum('loader', ['vanilla', 'fabric', 'forge', 'neoforge'])

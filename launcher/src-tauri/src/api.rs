@@ -262,16 +262,25 @@ pub async fn upload_skin(
     bytes: Vec<u8>,
     model: String,
 ) -> Result<()> {
-    let file = Part::bytes(bytes)
-        .file_name("skin.png")
-        .mime_str("image/png")?;
     send(
         client
             .put(api("/me/skin"))
             .bearer_auth(token)
-            .multipart(Form::new().part("file", file).text("model", model)),
+            .multipart(skin_form(bytes, model)?),
     )
     .await?;
+    Ok(())
+}
+
+pub fn skin_form(bytes: Vec<u8>, model: String) -> Result<Form> {
+    let file = Part::bytes(bytes)
+        .file_name("skin.png")
+        .mime_str("image/png")?;
+    Ok(Form::new().part("file", file).text("model", model))
+}
+
+pub async fn set_catalog_skin(client: &Client, token: &str, id: u32) -> Result<()> {
+    send(client.put(api(&format!("/me/skin/catalog/{id}"))).bearer_auth(token)).await?;
     Ok(())
 }
 

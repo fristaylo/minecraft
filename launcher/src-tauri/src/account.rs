@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use serde_json::Value;
 use tauri::{AppHandle, Manager, State};
 
 use crate::api::{self, CmdError, Me, Tokens};
@@ -70,6 +71,19 @@ pub async fn upload_skin(
 pub async fn reset_skin(app: AppHandle, state: State<'_, AppState>) -> Result<Me, CmdError> {
     let (token, _) = signed_in(&app, &state).await?;
     api::reset_skin(&state.client, &token).await?;
+    Ok(api::me(&state.client, &token).await?)
+}
+
+#[tauri::command]
+pub async fn list_skins(app: AppHandle, state: State<'_, AppState>) -> Result<Value, CmdError> {
+    let (token, _) = signed_in(&app, &state).await?;
+    Ok(api::fetch(state.client.get(api::api("/skins")).bearer_auth(token)).await?)
+}
+
+#[tauri::command]
+pub async fn set_catalog_skin(app: AppHandle, state: State<'_, AppState>, id: u32) -> Result<Me, CmdError> {
+    let (token, _) = signed_in(&app, &state).await?;
+    api::set_catalog_skin(&state.client, &token, id).await?;
     Ok(api::me(&state.client, &token).await?)
 }
 

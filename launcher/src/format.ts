@@ -45,3 +45,7 @@ export function dependentsOf(files: ManifestFile[], file: ManifestFile): Manifes
   const id = file.meta?.projectId;
   return id ? files.filter((other) => other.meta?.dependencies.includes(id)) : [];
 }
+
+export function pathName(path: string): string {
+  return path.split(/[\\/]/).pop() ?? path;
+}
