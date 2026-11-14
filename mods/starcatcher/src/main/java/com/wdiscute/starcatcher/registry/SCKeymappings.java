@@ -6,12 +6,14 @@ import org.lwjgl.glfw.GLFW;
 
 public interface SCKeymappings
 {
-    KeyMapping MINIGAME_HIT = new KeyMapping("key.starcatcher.minigame_hit", GLFW.GLFW_KEY_SPACE, "key.category.starcatcher.starcatcher");
+    String CATEGORY = "key.category.starcatcher.starcatcher";
+
+    KeyMapping MINIGAME_HIT = new KeyMapping("key.starcatcher.minigame_hit", GLFW.GLFW_KEY_SPACE, CATEGORY);
     KeyMapping EXPAND_TOURNAMENT = new KeyMapping("key.starcatcher.expand_tournament",
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_TAB, "key.category.starcatcher.starcatcher");
+            GLFW.GLFW_KEY_TAB, CATEGORY);
 
     KeyMapping OPEN_GUIDE = new KeyMapping("key.starcatcher.open_guide",
             InputConstants.Type.KEYSYM,
-            InputConstants.UNKNOWN.getValue(), "key.category.starcatcher.starcatcher");
+            InputConstants.UNKNOWN.getValue(), CATEGORY);
 }

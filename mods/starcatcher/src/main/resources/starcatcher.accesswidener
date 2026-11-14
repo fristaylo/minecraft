@@ -23,3 +23,6 @@ accessible field net/minecraft/client/renderer/RenderStateShard OVERLAY Lnet/min
 accessible field net/minecraft/client/renderer/RenderStateShard EQUAL_DEPTH_TEST Lnet/minecraft/client/renderer/RenderStateShard$DepthTestStateShard;
 accessible field net/minecraft/client/renderer/RenderStateShard COLOR_DEPTH_WRITE Lnet/minecraft/client/renderer/RenderStateShard$WriteMaskStateShard;
 accessible field net/minecraft/client/KeyMapping key Lcom/mojang/blaze3d/platform/InputConstants$Key;
+accessible field net/minecraft/client/KeyMapping clickCount I
+accessible field net/minecraft/client/KeyMapping MAP Ljava/util/Map;
+accessible field net/minecraft/client/KeyMapping ALL Ljava/util/Map;
