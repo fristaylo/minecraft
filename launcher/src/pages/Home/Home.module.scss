@@ -99,6 +99,8 @@
 
 .autoJoin {
   margin-right: 100%;
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 13.5px;
 }
 

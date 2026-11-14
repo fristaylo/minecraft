@@ -58,7 +58,10 @@ export function Packs() {
     <div className={s.admin}>
       <div className={s.alist}>
         {packs.map(({ id, name, theme, version, loaderType, loaderVersion }) => (
-          <button key={id} className={s.aitem} type="button" aria-current={id === pack?.id} onClick={() => setCurrent(id)}>
+          <button key={id} className={s.aitem} type="button" aria-current={id === pack?.id} onClick={() => {
+              setCurrent(id);
+              void load();
+            }}>
             <img src={blockIcon(theme)} alt="" />
             <span>
               <b>{name}</b>

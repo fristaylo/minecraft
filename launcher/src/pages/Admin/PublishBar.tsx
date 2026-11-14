@@ -14,11 +14,13 @@ export function PublishBar({
   draft,
   changes,
   onPublished,
+  onSettled,
 }: {
   pack: Pick<AdminPack, 'id' | 'gameServer'>;
   draft: Pick<Manifest, 'version'>;
   changes: number;
-  onPublished: (version: string) => Promise<void>;
+  onPublished: (version: string) => void;
+  onSettled: () => Promise<void>;
 }) {
   const toast = useToast();
   const attempt = useAttempt();
@@ -36,8 +38,9 @@ export function PublishBar({
       toast(`Сборка ${published.version} опубликована`, 'Игроки получат обновление при запуске.');
       setNotes('');
       setTyped(null);
-      await onPublished(published.version);
+      onPublished(published.version);
     });
+    await attempt(onSettled);
     unlisten();
     setProgress(null);
   }

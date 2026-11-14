@@ -457,13 +457,26 @@ pub async fn publish(
         .collect();
     upload_missing(&app, client, &token, &store_dir(&app)?, uploads).await?;
     emit(&app, "publish", "", 0, 1);
-    let published: Published = fetch(
-        client
-            .post(admin_url(&format!("/packs/{pack_id}/publish")))
-            .bearer_auth(&token)
-            .json(&json!({ "version": version, "files": draft.files, "notes": notes })),
-    )
-    .await?;
+    let response = client
+        .post(admin_url(&format!("/packs/{pack_id}/publish")))
+        .bearer_auth(&token)
+        .json(&json!({ "base": draft.version, "version": version, "files": draft.files, "notes": notes }))
+        .send()
+        .await?;
+    let status = response.status();
+    if !status.is_success() {
+        let body: Value = response.json().await.unwrap_or_default();
+        if body["error"] == "OutdatedDraft" {
+            return Err(anyhow!(
+                "Сборку уже обновили до {}, а черновик собран из {}. Загрузите свежую версию.",
+                body["latest"].as_str().unwrap_or_default(),
+                draft.version
+            )
+            .into());
+        }
+        return Err(anyhow!(body["errorMessage"].as_str().map_or_else(|| status.to_string(), str::to_string)).into());
+    }
+    let published: Published = response.json().await?;
     draft.version = published.version.clone();
     save(&app, &draft).await?;
     emit(&app, "done", "", 1, 1);

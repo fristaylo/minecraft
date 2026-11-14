@@ -60,6 +60,7 @@ export function PackEditor({
   onDeleted: () => Promise<void>;
 }) {
   const toast = useToast();
+  const attempt = useAttempt();
   const [draft, setDraft] = useState<Manifest | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +70,22 @@ export function PackEditor({
 
   return (
     <div className={s.editor}>
+      {draft && pack.version && pack.version !== draft.version && (
+        <div className={s.stale}>
+          <span>
+            Сборка обновлена до {pack.version}, черновик собран из {draft.version || 'пустой версии'}. Неопубликованные правки в черновике
+            пропадут при загрузке свежей версии.
+          </span>
+          <button
+            className="btn sm"
+            type="button"
+            onClick={() => void attempt(async () => setDraft(await adminDraft(pack.id, true)))}
+          >
+            <Icon name="refresh" size={16} />
+            Загрузить свежую
+          </button>
+        </div>
+      )}
       <MetaForm
         pack={pack}
         onSave={async (meta) => {
@@ -337,10 +354,8 @@ function Content({
         pack={pack}
         draft={draft}
         changes={countChanges(draft, published)}
-        onPublished={async (version) => {
-          onDraft({ ...draft, version });
-          await onSaved();
-        }}
+        onPublished={(version) => onDraft({ ...draft, version })}
+        onSettled={onSaved}
       />
       {opener?.meta && (
         <FileDrawer

@@ -93,12 +93,24 @@ adminPackRoutes.post('/:id/publish', async (c) => {
   const files = parsed.filter((file) => file !== undefined)
   if (
     typeof body.version !== 'string' ||
+    typeof body.base !== 'string' ||
     !/^[\w.+-]{1,32}$/.test(body.version) ||
     files.length !== parsed.length ||
     new Set(files.map((file) => file.path)).size !== files.length ||
     (body.notes !== undefined && typeof body.notes !== 'string')
   ) {
-    return fail(c, 400, 'IllegalArgumentException', 'Invalid version, files or notes.')
+    return fail(c, 400, 'IllegalArgumentException', 'Invalid version, base, files or notes.')
+  }
+  const latest = await latestVersion(pack.id)
+  if ((latest?.version ?? '') !== body.base) {
+    return c.json(
+      {
+        error: 'OutdatedDraft',
+        errorMessage: `Pack was updated to ${latest?.version ?? ''} since this draft (based on ${body.base}) was loaded.`,
+        latest: latest?.version ?? '',
+      },
+      409,
+    )
   }
   const version = body.version
   const [duplicate] = await db
@@ -114,9 +126,8 @@ adminPackRoutes.post('/:id/publish', async (c) => {
     size: sizes[index] ?? 0,
     url: `${config.publicUrl}/files/objects/${file.sha1.slice(0, 2)}/${file.sha1}`,
   }))
-  const previous = await latestVersion(pack.id)
   const changelog = [
-    ...diff(previous?.manifest.files ?? [], manifestFiles),
+    ...diff(latest?.manifest.files ?? [], manifestFiles),
     ...(body.notes ?? '')
       .split('\n')
       .map((line) => line.trim())
