@@ -106,6 +106,7 @@ export const packManifest = (packId: Pack['id']) => invoke<Manifest>('pack_manif
 export const serverStatus = () => invoke<ServerStatus>('server_status');
 export const localPackState = (packId: Pack['id']) => invoke<LocalPackState>('local_pack_state', { packId });
 
+export const resetConfigs = (packId: Pack['id']) => invoke<void>('reset_configs', { packId });
 export const play = (packId: Pack['id']) => invoke<void>('play', { packId });
 export const cancelLaunch = () => invoke<void>('cancel_launch');
 export const stopGame = () => invoke<void>('stop_game');

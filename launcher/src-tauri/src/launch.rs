@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use futures_util::future::try_join;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::{
     path::{Path, PathBuf},
@@ -20,6 +21,16 @@ use crate::{authlib, java, loader, minecraft, AppState};
 const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
 const WINDOW_POLL: Duration = Duration::from_millis(500);
 const WINDOW_TIMEOUT: Duration = Duration::from_secs(180);
+const DEFAULT_JVM_FLAGS: [&str; 8] = [
+    "-XX:+UseG1GC",
+    "-XX:+UnlockExperimentalVMOptions",
+    "-XX:G1NewSizePercent=20",
+    "-XX:G1ReservePercent=20",
+    "-XX:MaxGCPauseMillis=50",
+    "-XX:G1HeapRegionSize=32M",
+    "-XX:+ParallelRefProcEnabled",
+    "-XX:+DisableExplicitGC",
+];
 
 #[derive(Deserialize)]
 pub struct Instance {
@@ -101,28 +112,11 @@ async fn prepare(
     instance: &Instance,
     auth: &Auth,
 ) -> Result<Prepared> {
-    let vanilla = minecraft::vanilla(ctx, &instance.minecraft).await?;
-    let version = match instance.loader.kind.meta_dir() {
-        Some(dir) => {
-            if instance.loader.version.is_empty() {
-                bail!("loader version is not set");
-            }
-            let profile =
-                loader::profile(ctx, dir, &instance.minecraft, &instance.loader.version).await?;
-            minecraft::merge(vanilla, profile)
-        }
-        None => vanilla,
-    };
-    let major = version
-        .java_version
-        .as_ref()
-        .map_or(8, |j| j.major_version)
-        .max(instance.java_major.unwrap_or(0));
-    let java = java::resolve(ctx, settings, major).await?;
-    minecraft::install(ctx, &version).await?;
-    let assets_index = minecraft::install_assets(ctx, &version).await?;
-    loader::run_processors(ctx, &version, &instance.minecraft, &java).await?;
-    let mut args = authlib::jvm_args(ctx).await?;
+    let ((version, java, assets_index), mut args) = try_join(
+        prepare_game(ctx, settings, instance),
+        authlib::jvm_args(ctx),
+    )
+    .await?;
 
     let game_dir = ctx.root.join("instances").join(&instance.id);
     tokio::fs::create_dir_all(&game_dir).await?;
@@ -181,7 +175,10 @@ async fn prepare(
                 .collect(),
         ),
     };
-    args.push(format!("-Xmx{}M", (settings.ram_gb * 1024.0) as u32));
+    let xmx = (settings.ram_gb * 1024.0) as u32;
+    args.push(format!("-Xmx{xmx}M"));
+    args.push(format!("-Xms{}M", xmx / 2));
+    args.extend(DEFAULT_JVM_FLAGS.iter().map(|f| (*f).to_owned()));
     args.extend(settings.jvm_args.split_whitespace().map(str::to_owned));
     if let Some(server) = &instance.server {
         args.push(format!("-Dagon.server={server}"));
@@ -212,6 +209,35 @@ async fn prepare(
         args,
         game_dir,
     })
+}
+
+async fn prepare_game(
+    ctx: &Ctx,
+    settings: &Settings,
+    instance: &Instance,
+) -> Result<(minecraft::VersionJson, PathBuf, String)> {
+    let vanilla = minecraft::vanilla(ctx, &instance.minecraft).await?;
+    let version = match instance.loader.kind.meta_dir() {
+        Some(dir) => {
+            if instance.loader.version.is_empty() {
+                bail!("loader version is not set");
+            }
+            let profile =
+                loader::profile(ctx, dir, &instance.minecraft, &instance.loader.version).await?;
+            minecraft::merge(vanilla, profile)
+        }
+        None => vanilla,
+    };
+    let major = version
+        .java_version
+        .as_ref()
+        .map_or(8, |j| j.major_version)
+        .max(instance.java_major.unwrap_or(0));
+    let java = java::resolve(ctx, settings, major).await?;
+    minecraft::install(ctx, &version).await?;
+    let assets_index = minecraft::install_assets(ctx, &version).await?;
+    loader::run_processors(ctx, &version, &instance.minecraft, &java).await?;
+    Ok((version, java, assets_index))
 }
 
 async fn spawn(

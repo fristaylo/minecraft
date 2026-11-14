@@ -65,6 +65,7 @@ pub fn run() {
             sync::play,
             sync::set_optional,
             sync::local_pack_state,
+            sync::reset_configs,
             update::check_update,
             update::install_update,
             admin::admin_packs,

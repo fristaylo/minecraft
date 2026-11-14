@@ -1,10 +1,11 @@
+import { ask } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Blocks } from '@components/Loaders/Loaders';
 import { Icon } from '@components/Icon/Icon';
 import { Scene } from '@components/Scene/Scene';
-import { errorText } from '@/api';
+import { errorText, resetConfigs } from '@/api';
 import { modCount, packStatus, STEPS, useGame, type PackInfo } from '@/context/Game';
 import { useAccount } from '@/context/Session';
 import { useSettings } from '@/context/Settings';
@@ -239,6 +240,9 @@ export function Home() {
         <button className="btn over icon lg" type="button" aria-label="Открыть папку сборки" onClick={() => void openFolder()}>
           <Icon name="folder" size={20} />
         </button>
+        <button className="btn over icon lg" type="button" aria-label="Сбросить настройки" title="Сбросить настройки" disabled={busy} onClick={() => void resetPackConfigs()}>
+          <Icon name="refresh" size={20} />
+        </button>
         {busy && <span className={`hint ${s.note}`}>Сначала дождитесь запуска другой сборки</span>}
       </>
     );
@@ -249,6 +253,22 @@ export function Home() {
       await openPath(`${settings.game_dir}\\instances\\${pack.id}`);
     } catch (error) {
       toast('Не удалось открыть папку', errorText(error), { kind: 'warn' });
+    }
+  }
+
+  async function resetPackConfigs() {
+    const confirmed = await ask('Сбросить настройки и клавиши к настройкам сборки? Они восстановятся при следующем запуске.', {
+      title: 'Сброс настроек',
+      kind: 'warning',
+      okLabel: 'Сбросить',
+      cancelLabel: 'Отмена',
+    });
+    if (!confirmed) return;
+    try {
+      await resetConfigs(pack.id);
+      toast('Настройки сброшены', 'Восстановятся при запуске');
+    } catch (error) {
+      toast('Не удалось сбросить настройки', errorText(error), { kind: 'warn' });
     }
   }
 

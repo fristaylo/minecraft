@@ -425,6 +425,10 @@ fn yes() -> bool {
 
 async fn extract_natives(ctx: &Ctx, version: &VersionJson) -> Result<()> {
     let dir = natives_dir(ctx, version);
+    let marker = dir.join(".extracted");
+    if marker.exists() {
+        return Ok(());
+    }
     tokio::fs::create_dir_all(&dir).await?;
     let libs = ctx.root.join("libraries");
     let jars: Vec<(PathBuf, Vec<String>)> = version
@@ -440,7 +444,9 @@ async fn extract_natives(ctx: &Ctx, version: &VersionJson) -> Result<()> {
         jars.iter()
             .try_for_each(|(jar, exclude)| unzip(jar, &dir, exclude))
     })
-    .await?
+    .await??;
+    tokio::fs::write(marker, "").await?;
+    Ok(())
 }
 
 fn unzip(jar: &Path, dir: &Path, exclude: &[String]) -> Result<()> {

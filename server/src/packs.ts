@@ -249,7 +249,7 @@ async function updateGameServer(pack: Pack, manifest: Manifest): Promise<string[
   }
   const root = join(config.dataDir, 'mc')
   const managedPath = join(root, '.managed.json')
-  const files = manifest.files.filter((file) => file.side !== 'client' || file.kind === 'config')
+  const files = manifest.files.filter((file) => file.side !== 'client')
   try {
     const previous: string[] = await Bun.file(managedPath).json().catch(() => [])
     await Promise.all(previous.map((path) => rm(join(root, path), { force: true })))

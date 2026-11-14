@@ -108,6 +108,30 @@ pub async fn local_pack_state(
     })
 }
 
+#[tauri::command]
+pub async fn reset_configs(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    pack_id: String,
+) -> Result<(), CmdError> {
+    let (token, _) = account::signed_in(&app, &state).await?;
+    let manifest = api::manifest(&state.client, &token, &pack_id).await?;
+    let dir = instance_dir(&state, &pack_id);
+    let mut sync_state = load(&dir).await;
+    for file in manifest
+        .files
+        .iter()
+        .filter(|f| f.policy == Policy::Once && f.side != Side::Server)
+    {
+        match tokio::fs::remove_file(resolve(&dir, &file.path)?).await {
+            Err(e) if e.kind() != ErrorKind::NotFound => return Err(anyhow::Error::from(e).into()),
+            _ => {}
+        }
+        sync_state.files.remove(&file.path);
+    }
+    Ok(save(&dir, &sync_state).await?)
+}
+
 async fn sync(ctx: &Ctx, manifest: &Manifest) -> Result<()> {
     let dir = ctx.root.join("instances").join(&manifest.id);
     let mut sync_state = load(&dir).await;
