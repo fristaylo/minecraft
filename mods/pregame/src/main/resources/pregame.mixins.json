@@ -3,6 +3,7 @@
   "package": "ru.pregame.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "PlayerManagerMixin",
     "ServerWorldMixin"
   ],
   "client": []

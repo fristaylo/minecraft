@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -71,10 +72,11 @@ public final class GameFlow {
 			if (Lobby.contains(player.getWorld())) {
 				transfer(server, player);
 			} else {
+				giveGuides(server, player);
 				send(player, Phase.STARTED, 0, false);
 			}
 		} else if (countdownTicks < 0) {
-			Lobby.admit(server, player);
+			Lobby.admit(player);
 			send(player, Phase.WAITING, 0, false);
 		} else {
 			send(player, Phase.COUNTDOWN, secondsLeft(), false);
@@ -89,6 +91,7 @@ public final class GameFlow {
 		player.teleport(overworld, spawn.getX() + 0.5, y, spawn.getZ() + 0.5, player.getYaw(), player.getPitch());
 		player.changeGameMode(GameMode.SURVIVAL);
 		player.getInventory().clear();
+		giveGuides(server, player);
 		player.setExperienceLevel(0);
 		player.setExperiencePoints(0);
 		player.totalExperience = 0;
@@ -99,6 +102,26 @@ public final class GameFlow {
 		player.fallDistance = 0;
 		player.setSpawnPoint(World.OVERWORLD, null, 0, false, false);
 		send(player, Phase.STARTED, 0, true);
+	}
+
+	private static void giveGuides(MinecraftServer server, ServerPlayerEntity player) {
+		PregameState state = PregameState.get(server);
+		if (!state.guided.add(player.getUuid())) {
+			return;
+		}
+		state.markDirty();
+		String target = player.getUuidAsString();
+		if (FabricLoader.getInstance().isModLoaded("adorablehamsterpets")) {
+			run(server, "give " + target + " adorablehamsterpets:hamster_guide_book[patchouli:book=\"adorablehamsterpets:hamster_tips_guide_book\"]");
+			run(server, "advancement grant " + target + " only adorablehamsterpets:technical/has_received_initial_guidebook");
+		}
+		if (FabricLoader.getInstance().isModLoaded("starcatcher")) {
+			run(server, "give " + target + " starcatcher:starcatcher_guide");
+		}
+	}
+
+	private static void run(MinecraftServer server, String command) {
+		server.getCommandManager().executeWithPrefix(server.getCommandSource().withSilent(), command);
 	}
 
 	private static int secondsLeft() {

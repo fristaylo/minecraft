@@ -19,6 +19,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import ru.pregame.Pregame;
@@ -27,6 +28,8 @@ public final class Lobby {
 	public static final RegistryKey<World> KEY = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(Pregame.MOD_ID, "lobby"));
 
 	private static final BlockPos ORIGIN = new BlockPos(-11, 80, -11);
+	private static final Vec3d SPAWN = new Vec3d(0.5, 98, 3.5);
+	private static final float SPAWN_YAW = 180F;
 
 	private Lobby() {
 	}
@@ -49,10 +52,12 @@ public final class Lobby {
 		return world.getRegistryKey().equals(KEY);
 	}
 
-	public static void admit(MinecraftServer server, ServerPlayerEntity player) {
-		if (!contains(player.getWorld())) {
-			teleport(server, player);
-		}
+	public static void moveToSpawn(ServerPlayerEntity player) {
+		player.refreshPositionAndAngles(SPAWN.x, SPAWN.y, SPAWN.z, SPAWN_YAW, 0);
+		player.fallDistance = 0;
+	}
+
+	public static void admit(ServerPlayerEntity player) {
 		player.changeGameMode(GameMode.ADVENTURE);
 		player.setHealth(player.getMaxHealth());
 		feed(player);
@@ -80,14 +85,10 @@ public final class Lobby {
 			player.changeGameMode(GameMode.ADVENTURE);
 			feed(player);
 			if (player.getY() < 60) {
-				teleport(server, player);
+				player.teleport(player.getServerWorld(), SPAWN.x, SPAWN.y, SPAWN.z, SPAWN_YAW, 0);
+				player.fallDistance = 0;
 			}
 		}
-	}
-
-	private static void teleport(MinecraftServer server, ServerPlayerEntity player) {
-		player.teleport(server.getWorld(KEY), 0.5, 98, 3.5, 180F, 0);
-		player.fallDistance = 0;
 	}
 
 	private static void feed(ServerPlayerEntity player) {
