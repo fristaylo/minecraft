@@ -1,15 +1,9 @@
 {
   "text.autoconfig.atlasminimap.title": "Atlas Minimap",
   "text.autoconfig.atlasminimap.option.enabled": "Show minimap",
-  "text.autoconfig.atlasminimap.option.size": "Size",
-  "text.autoconfig.atlasminimap.option.zoom": "Tile scale",
+  "text.autoconfig.atlasminimap.option.size": "Minimap size",
+  "text.autoconfig.atlasminimap.option.tileChunks": "Chunks per tile",
   "text.autoconfig.atlasminimap.option.showCoordinates": "Show coordinates",
-  "text.autoconfig.atlasminimap.option.size.SMALL": "Small",
-  "text.autoconfig.atlasminimap.option.size.MEDIUM": "Medium",
-  "text.autoconfig.atlasminimap.option.size.LARGE": "Large",
-  "text.autoconfig.atlasminimap.option.zoom.ONE": "1 chunk",
-  "text.autoconfig.atlasminimap.option.zoom.TWO": "2×2 chunks",
-  "text.autoconfig.atlasminimap.option.zoom.FOUR": "4×4 chunks",
   "key.atlasminimap.toggle": "Toggle minimap",
   "key.categories.atlasminimap": "Atlas Minimap"
 }
