@@ -7,3 +7,5 @@ launcher/src-tauri/gen
 mods/*/build
 mods/*/.gradle
 mods/*/run
+
+.claude/

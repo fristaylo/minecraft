@@ -71,9 +71,14 @@ services:
             ENFORCE_SECURE_PROFILE: "FALSE"
             ENABLE_WHITELIST: "TRUE"
             ENFORCE_WHITELIST: "TRUE"
+            VIEW_DISTANCE: "12"
+            SIMULATION_DISTANCE: "8"
+            SYNC_CHUNK_WRITES: "FALSE"
+            MAX_TICK_TIME: "-1"
             ENABLE_RCON: "TRUE"
             RCON_PASSWORD: ${RCON_PASSWORD}
-            MEMORY: ${MC_MEMORY:-4G}
+            MEMORY: ${MC_MEMORY:-12G}
+            JVM_XX_OPTS: -XX:+UseZGC -XX:+ZGenerational
             JVM_OPTS: -javaagent:/data/authlib-injector.jar=http://api:3000/api/yggdrasil/ -Dsun.net.client.defaultConnectTimeout=10000 -Dsun.net.client.defaultReadTimeout=10000
         volumes:
             - ./data/mc:/data
