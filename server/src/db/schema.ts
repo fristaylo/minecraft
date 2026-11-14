@@ -99,7 +99,7 @@ export type ManifestFile = {
     iconUrl: string
     gallery: string[]
     pageUrl: string
-    source: 'modrinth' | 'curseforge' | 'manual'
+    source: 'modrinth' | 'curseforge' | 'manual' | 'local' | 'custom'
     projectId: string
     versionId: string
     dependencies: string[]

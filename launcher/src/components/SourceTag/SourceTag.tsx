@@ -12,4 +12,6 @@ const SOURCES = {
   modrinth: { label: 'Modrinth', tone: 'mr' },
   curseforge: { label: 'CurseForge', tone: 'cf' },
   manual: { label: 'CurseForge', tone: 'cf' },
+  local: { label: 'Свой мод', tone: '' },
+  custom: { label: 'Кастомный', tone: '' },
 };

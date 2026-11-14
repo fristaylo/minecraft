@@ -5,7 +5,7 @@ import { fail, type AppEnv } from './accounts'
 import { config } from './config'
 
 const objectsDir = join(config.dataDir, 'files', 'objects')
-const cdnHosts = ['cdn.modrinth.com', 'edge.forgecdn.net', 'mediafilecdn.forgecdn.net']
+const cdnHosts = ['github.com', 'cdn.modrinth.com', 'edge.forgecdn.net', 'mediafilecdn.forgecdn.net']
 
 export const adminFiles = new Hono<AppEnv>()
 
@@ -52,9 +52,13 @@ async function saveObject(body: ReadableStream<Uint8Array>, sha1: string): Promi
   await mkdir(objectsDir, { recursive: true })
   const temp = join(objectsDir, `.${crypto.randomUUID()}.part`)
   try {
-    await Bun.write(temp, new Response(body))
+    const writer = Bun.file(temp).writer()
     const hasher = new Bun.CryptoHasher('sha1')
-    for await (const chunk of Bun.file(temp).stream()) hasher.update(chunk)
+    for await (const chunk of body) {
+      hasher.update(chunk)
+      writer.write(chunk)
+    }
+    await writer.end()
     if (hasher.digest('hex') !== sha1) return false
     await mkdir(dirname(objectPath(sha1)), { recursive: true })
     await rename(temp, objectPath(sha1))

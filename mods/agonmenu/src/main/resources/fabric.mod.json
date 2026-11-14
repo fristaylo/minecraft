@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "agonmenu",
+  "version": "${version}",
+  "name": "Agon Menu",
+  "description": "Client-side restyling of the title screen, loading screens and pause menu.\n\nCredits (panoramas):\n- Shader Panorama of 1.21.11: Mounts of Mayhem by GAMER_TIGE99 - MIT - https://modrinth.com/resourcepack/shader-panorama-of-1.21.11-mounts-of-mayhem\n- Panorama Nature's Spirit (Blooming Forest) by Taygeta - MIT - https://modrinth.com/resourcepack/panorama-natures-spirit-blooming-forest\n- Classic panorama with shaders by GAMING_SHORTS(RAMA) - CC BY 4.0 - https://modrinth.com/resourcepack/classic-panorama-with-shaders\n- 1.20 panorama with shaders (night) by GAMING_SHORTS(RAMA) - BSD-2-Clause - https://modrinth.com/resourcepack/1.20-panorama-with-shaders-night\n- Main Menu Panoramas by noice (sumone_lol) - CC BY-NC 4.0 - https://modrinth.com/resourcepack/noice-panoramas",
+  "authors": [
+    "Agon"
+  ],
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "mixins": [
+    "agonmenu.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}

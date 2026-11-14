@@ -16,6 +16,7 @@ pub struct Settings {
     pub console: bool,
     pub game_dir: PathBuf,
     pub parallel_downloads: u8,
+    pub auto_join: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -73,6 +74,7 @@ impl Default for Settings {
                 .unwrap_or_default()
                 .join(".agon-launcher"),
             parallel_downloads: 8,
+            auto_join: false,
         }
     }
 }

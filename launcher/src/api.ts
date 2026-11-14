@@ -40,7 +40,7 @@ export type ManifestFile = {
     iconUrl: string;
     gallery: string[];
     pageUrl: string;
-    source: 'modrinth' | 'curseforge' | 'manual';
+    source: 'modrinth' | 'curseforge' | 'manual' | 'local' | 'custom';
     projectId: string;
     versionId: string;
     dependencies: string[];
@@ -77,6 +77,7 @@ export type Settings = {
   console: boolean;
   game_dir: string;
   parallel_downloads: number;
+  auto_join: boolean;
 };
 
 export type LaunchProgress = {
@@ -128,7 +129,7 @@ export type Kind = ManifestFile['kind'];
 export type Side = ManifestFile['side'];
 export type Policy = ManifestFile['policy'];
 export type Source = Meta['source'];
-export type Market = Exclude<Source, 'manual'>;
+export type Market = Exclude<Source, 'manual' | 'local'>;
 export type Scope = Market | 'both';
 
 export type PackMeta = {
@@ -201,6 +202,7 @@ export const applyUpdate = (args: FileRef) => invoke<Outcome>('apply_update', ar
 export const openManualDownload = (args: FileRef) => invoke<void>('open_manual_download', args);
 export const addConfigFiles = (args: { packId: Pack['id']; root: string; paths: string[]; policy: Policy }) =>
   invoke<Manifest>('add_config_files', args);
+export const addLocalMod = (args: { packId: Pack['id']; path: string }) => invoke<Manifest>('add_local_mod', args);
 export const publish = (args: { packId: Pack['id']; version: string; notes: string }) => invoke<Published>('publish', args);
 export const search = (args: { query: string; source: Scope; kind: Kind; minecraft: string; loader: LoaderType }) =>
   invoke<SearchItem[]>('search', args);

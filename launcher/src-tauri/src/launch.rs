@@ -17,6 +17,7 @@ pub struct Instance {
     pub minecraft: String,
     pub loader: Loader,
     pub java_major: Option<u32>,
+    pub server: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -171,6 +172,9 @@ async fn prepare(
     };
     args.push(format!("-Xmx{}M", (settings.ram_gb * 1024.0) as u32));
     args.extend(settings.jvm_args.split_whitespace().map(str::to_owned));
+    if let Some(server) = &instance.server {
+        args.push(format!("-Dagon.server={server}"));
+    }
     args.extend(jvm.iter().map(|a| fill(a, &vars)));
     args.push(version.main_class.clone());
     args.extend(game.iter().map(|a| fill(a, &vars)));
@@ -182,6 +186,14 @@ async fn prepare(
             "--height".to_owned(),
             settings.window.height.to_string(),
         ]),
+    }
+    if let Some(server) = instance.server.as_ref().filter(|_| settings.auto_join) {
+        args.push("--quickPlayMultiplayer".to_owned());
+        args.push(if server.contains(':') {
+            server.clone()
+        } else {
+            format!("{server}:25565")
+        });
     }
     Ok(Prepared {
         java,

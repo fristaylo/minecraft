@@ -97,6 +97,14 @@
   letter-spacing: 0.01em;
 }
 
+.autoJoin {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 14px;
+  height: 54px;
+}
+
 .note {
   color: #cfd6cf;
   max-width: 300px;

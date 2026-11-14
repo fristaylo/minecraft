@@ -6,6 +6,7 @@ import { Blocks, Dots } from '@components/Loaders/Loaders';
 import { FileDrawer, ModDrawer } from '@components/ModDrawer/ModDrawer';
 import {
   addConfigFiles,
+  addLocalMod,
   addProject,
   adminDraft,
   adminSetOptional,
@@ -209,6 +210,15 @@ function Content({
     });
   }
 
+  async function addLocal() {
+    await attempt(async () => {
+      const picked = await open({ filters: [{ name: 'Fabric mod', extensions: ['jar'] }] });
+      if (!picked) return;
+      onDraft(await addLocalMod({ packId: pack.id, path: picked }));
+      toast('Мод добавлен', 'Файл загрузится на сервер при публикации.');
+    });
+  }
+
   async function openFinder(item: SearchItem) {
     setOpened({ ctx: 'finder', item, details: null, names: {} });
     await attempt(async () => {
@@ -277,6 +287,10 @@ function Content({
                   Обновить все ({updates.length})
                 </button>
               )}
+              <button className="btn sm" type="button" onClick={() => void addLocal()}>
+                <Icon name="plus" size={16} />
+                Добавить свой мод (.jar)
+              </button>
               <button className="btn sm" type="button" disabled={busy !== null} onClick={() => void check()}>
                 {busy === 'check' ? (
                   <>

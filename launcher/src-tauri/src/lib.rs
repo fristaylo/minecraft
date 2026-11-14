@@ -81,6 +81,7 @@ pub fn run() {
             admin::apply_update,
             admin::open_manual_download,
             admin::add_config_files,
+            admin::add_local_mod,
             admin::publish,
             admin::list_users,
             admin::set_role,

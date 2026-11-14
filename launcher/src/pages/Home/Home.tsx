@@ -15,7 +15,7 @@ import s from './Home.module.scss';
 export function Home() {
   const { packs, selected, loadError, reload, status, run, running, play, cancel, stop } = useGame();
   const account = useAccount();
-  const { settings } = useSettings();
+  const { settings, update } = useSettings();
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -226,6 +226,11 @@ export function Home() {
           <Icon name={code === 'ready' ? 'play' : 'download'} size={20} stroke={2.2} />
           {PLAY_LABEL[code]}
         </button>
+        {server && (
+          <label className={`check ${s.autoJoin}`}>
+            <input type="checkbox" className="sw" checked={settings.auto_join} onChange={(event) => update({ auto_join: event.target.checked })} /> Сразу на сервер
+          </label>
+        )}
         {mods > 0 && (
           <button className="btn over lg" type="button" onClick={() => navigate('/mods')}>
             <Icon name="cube" size={18} />

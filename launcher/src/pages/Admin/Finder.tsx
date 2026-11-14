@@ -12,6 +12,7 @@ const SCOPES: [Scope, string][] = [
   ['both', 'Обе'],
   ['modrinth', 'Modrinth'],
   ['curseforge', 'CurseForge'],
+  ['custom', 'Кастомные моды'],
 ];
 
 const WHAT = { mod: 'мод', resourcepack: 'ресурспак', shader: 'шейдер', config: 'конфиг' };
@@ -59,14 +60,14 @@ export function Finder({
           <input
             className="inp"
             type="search"
-            placeholder={`Найти ${WHAT[kind]} на Modrinth и CurseForge`}
+            placeholder={scope === 'custom' ? 'Найти кастомный мод' : `Найти ${WHAT[kind]} на Modrinth и CurseForge`}
             aria-label="Поиск по площадкам"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
         <div className="pills" role="group" aria-label="Площадка">
-          {SCOPES.map(([id, label]) => (
+          {SCOPES.filter(([id]) => id !== 'custom' || kind === 'mod').map(([id, label]) => (
             <button key={id} type="button" aria-pressed={scope === id} onClick={() => setScope(id)}>
               {label}
             </button>

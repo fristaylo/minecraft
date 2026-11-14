@@ -7,6 +7,7 @@ use serde_json::{json, Value};
 use sha1::{Digest, Sha1};
 use std::{
     collections::BTreeSet,
+    io::Read,
     path::{Component, Path, PathBuf},
     time::Duration,
 };
@@ -99,7 +100,7 @@ pub async fn set_pack_meta(
         version: meta.loader_version.unwrap_or_default(),
     };
     draft.java = Some(meta.java);
-    draft.server = json!(meta.server);
+    draft.server = meta.server;
     save(&app, &draft).await?;
     Ok(draft)
 }
@@ -260,7 +261,7 @@ pub async fn apply_update(
     let (source, project_id) = old
         .meta
         .as_ref()
-        .filter(|meta| meta.source != Source::Manual)
+        .filter(|meta| !matches!(meta.source, Source::Manual | Source::Local))
         .map(|meta| (meta.source, meta.project_id.clone()))
         .ok_or_else(|| anyhow!("{path} cannot be updated automatically"))?;
     let mut outcome = Outcome {
@@ -363,6 +364,69 @@ pub async fn add_config_files(
             meta: None,
         });
     }
+    save(&app, &draft).await?;
+    Ok(draft)
+}
+
+#[tauri::command]
+pub async fn add_local_mod(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    pack_id: String,
+    path: String,
+) -> Result<Manifest, CmdError> {
+    let token = guard(&app, &state).await?;
+    let mut draft = load(&app, &state, &token, &pack_id, false).await?;
+    let bytes = tokio::fs::read(&path).await?;
+    let stem = Path::new(&path)
+        .file_stem()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| anyhow!("Invalid file name {path}"))?
+        .to_owned();
+    let info = read_fabric_info(&bytes);
+    let field = |key: &str| info.get(key).and_then(Value::as_str).map(str::to_owned);
+    let sha1 = sha1_hex(&bytes);
+    let store = store_dir(&app)?;
+    tokio::fs::create_dir_all(&store).await?;
+    tokio::fs::write(store.join(&sha1), &bytes).await?;
+    let project_id = field("id").unwrap_or_else(|| stem.clone());
+    let path = format!("mods/{stem}.jar");
+    draft.files.retain(|file| {
+        file.path != path && !file.meta.as_ref().is_some_and(|meta| meta.project_id == project_id)
+    });
+    draft.files.push(ManifestFile {
+        path,
+        sha1,
+        size: bytes.len() as u64,
+        url: String::new(),
+        side: Side::Client,
+        kind: Kind::Mod,
+        optional: false,
+        default_enabled: true,
+        policy: Policy::Managed,
+        meta: Some(Meta {
+            title: field("name").unwrap_or(stem),
+            author: info
+                .get("authors")
+                .and_then(Value::as_array)
+                .map(|authors| {
+                    authors
+                        .iter()
+                        .filter_map(|author| author.as_str().or_else(|| author.get("name")?.as_str()))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                })
+                .unwrap_or_default(),
+            description: field("description").unwrap_or_default(),
+            icon_url: String::new(),
+            gallery: vec![],
+            page_url: String::new(),
+            source: Source::Local,
+            project_id,
+            version_id: field("version").unwrap_or_default(),
+            dependencies: vec![],
+        }),
+    });
     save(&app, &draft).await?;
     Ok(draft)
 }
@@ -509,7 +573,7 @@ fn entry(project: Project, version: Version, source: Source, kind: Kind) -> Mani
         sha1: version.sha1,
         size: version.size,
         url: version.url.unwrap_or_default(),
-        side: Side::Both,
+        side: version.side.unwrap_or(Side::Both),
         kind,
         optional: false,
         default_enabled: true,
@@ -645,6 +709,15 @@ fn emit(app: &AppHandle, stage: &str, label: &str, done: u64, total: u64) {
         "admin://publish",
         json!({ "stage": stage, "label": label, "done": done, "total": total }),
     );
+}
+
+fn read_fabric_info(jar: &[u8]) -> Value {
+    let mut text = String::new();
+    zip::ZipArchive::new(std::io::Cursor::new(jar))
+        .ok()
+        .and_then(|mut archive| archive.by_name("fabric.mod.json").ok()?.read_to_string(&mut text).ok())
+        .and_then(|_| serde_json::from_str(&text).ok())
+        .unwrap_or(Value::Null)
 }
 
 fn sha1_hex(bytes: &[u8]) -> String {

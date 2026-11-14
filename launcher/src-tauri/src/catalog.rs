@@ -1,16 +1,26 @@
 use anyhow::{bail, Result};
-use futures_util::{future::try_join, stream, StreamExt, TryStreamExt};
-use reqwest::{Client, RequestBuilder};
+use futures_util::{
+    future::{try_join, try_join3},
+    stream, StreamExt, TryStreamExt,
+};
+use reqwest::{
+    header::{ACCEPT, USER_AGENT},
+    Client, RequestBuilder,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 use tauri::{AppHandle, State};
 
-use crate::api::{api, fetch, CmdError, Kind, ManifestFile, Source};
+use crate::api::{api, fetch, CmdError, Kind, ManifestFile, Side, Source};
 use crate::loader::LoaderKind;
 use crate::{admin, download, AppState};
 
 const MODRINTH: &str = "https://api.modrinth.com/v2";
+const MODS_REPO: &str = env!("MODS_REPO");
 
 pub struct Http<'a> {
     pub client: &'a Client,
@@ -28,6 +38,7 @@ pub struct Target<'a> {
 pub enum Scope {
     Modrinth,
     Curseforge,
+    Custom,
     Both,
 }
 
@@ -71,6 +82,8 @@ pub struct Version {
     game_versions: Vec<String>,
     loaders: Vec<String>,
     pub dependencies: Vec<Dependency>,
+    #[serde(skip)]
+    pub side: Option<Side>,
 }
 
 #[derive(Serialize)]
@@ -107,6 +120,9 @@ pub async fn search(
         client: &state.client,
         token: &token,
     };
+    if source == Scope::Custom {
+        return Ok(custom_search(&http, &query, kind).await?);
+    }
     let target = Target {
         minecraft: &minecraft,
         loader,
@@ -196,7 +212,25 @@ pub async fn project(http: &Http<'_>, source: Source, id: &str) -> Result<Projec
                 body: String::new(),
             })
         }
-        Source::Manual => bail!("Manual files have no catalog project"),
+        Source::Custom => {
+            let release = custom_releases(http)
+                .await?
+                .into_iter()
+                .find(|release| release.id == id)
+                .ok_or_else(|| anyhow::anyhow!("No releases of {id} in {MODS_REPO}"))?;
+            Ok(Project {
+                source,
+                id: release.id.clone(),
+                title: release.title,
+                author: custom_author(),
+                description: release.description.clone(),
+                icon_url: String::new(),
+                gallery: vec![],
+                page_url: format!("https://github.com/{MODS_REPO}/releases?q={}", release.id),
+                body: release.description,
+            })
+        }
+        Source::Manual | Source::Local => bail!("Manual files have no catalog project"),
     }
 }
 
@@ -231,7 +265,13 @@ pub async fn versions(
             versions.sort_by(|a, b| b.date.cmp(&a.date));
             Ok(versions)
         }
-        Source::Manual => bail!("Manual files have no catalog versions"),
+        Source::Custom => Ok(custom_releases(http)
+            .await?
+            .into_iter()
+            .filter(|release| release.id == id)
+            .map(custom_version)
+            .collect()),
+        Source::Manual | Source::Local => bail!("Manual files have no catalog versions"),
     }
 }
 
@@ -241,12 +281,13 @@ pub async fn updates(
     files: &[ManifestFile],
     target: Target<'_>,
 ) -> Result<Vec<Update>> {
-    let (modrinth, curseforge) = try_join(
+    let (modrinth, curseforge, custom) = try_join3(
         modrinth_updates(http, files, target),
         curseforge_updates(http, store, files, target),
+        custom_updates(http, files),
     )
     .await?;
-    Ok(modrinth.into_iter().chain(curseforge).collect())
+    Ok(modrinth.into_iter().chain(curseforge).chain(custom).collect())
 }
 
 impl Http<'_> {
@@ -354,6 +395,143 @@ async fn modrinth_updates(http: &Http<'_>, files: &[ManifestFile], target: Targe
         }
     }
     Ok(updates)
+}
+
+async fn custom_search(http: &Http<'_>, query: &str, kind: Kind) -> Result<Vec<Item>> {
+    if kind != Kind::Mod {
+        return Ok(vec![]);
+    }
+    let query = query.to_lowercase();
+    let mut seen = HashSet::new();
+    Ok(custom_releases(http)
+        .await?
+        .into_iter()
+        .filter(|release| seen.insert(release.id.clone()))
+        .filter(|release| {
+            [&release.id, &release.title, &release.description]
+                .iter()
+                .any(|text| text.to_lowercase().contains(&query))
+        })
+        .map(|release| Item {
+            source: Source::Custom,
+            id: release.id,
+            title: release.title,
+            author: custom_author(),
+            description: release.description,
+            icon_url: String::new(),
+            downloads: 0,
+            compatible: true,
+        })
+        .collect())
+}
+
+async fn custom_updates(http: &Http<'_>, files: &[ManifestFile]) -> Result<Vec<Update>> {
+    let group: Vec<&ManifestFile> = files.iter().filter(|file| is_source(file, Source::Custom)).collect();
+    if group.is_empty() {
+        return Ok(vec![]);
+    }
+    let releases = custom_releases(http).await?;
+    let mut updates = vec![];
+    for file in group {
+        let Some(meta) = file.meta.as_ref() else {
+            continue;
+        };
+        if let Some(latest) = releases.iter().find(|release| release.id == meta.project_id) {
+            if latest.tag != meta.version_id {
+                updates.push(Update {
+                    path: file.path.clone(),
+                    latest: custom_version(latest.clone()),
+                });
+            }
+        }
+    }
+    Ok(updates)
+}
+
+async fn custom_releases(http: &Http<'_>) -> Result<Vec<CustomRelease>> {
+    let releases: Vec<GhRelease> = fetch(
+        http.client
+            .get(format!("https://api.github.com/repos/{MODS_REPO}/releases"))
+            .query(&[("per_page", "100")])
+            .header(USER_AGENT, "agon-launcher")
+            .header(ACCEPT, "application/vnd.github+json"),
+    )
+    .await?;
+    let mut releases: Vec<CustomRelease> = releases
+        .into_iter()
+        .filter(|release| !release.draft)
+        .filter_map(custom_release)
+        .collect();
+    releases.sort_by(|a, b| b.date.cmp(&a.date));
+    Ok(releases)
+}
+
+fn custom_release(release: GhRelease) -> Option<CustomRelease> {
+    let (id, version) = release.tag_name.rsplit_once("-v")?;
+    if version.is_empty() || !version.chars().all(|c| c.is_ascii_digit() || c == '.') {
+        return None;
+    }
+    let asset = release.assets.into_iter().find(|asset| asset.name.ends_with(".jar"))?;
+    let body = release.body.unwrap_or_default();
+    let mut side = Side::Both;
+    let mut sha1 = None;
+    let mut description = vec![];
+    for line in body.lines() {
+        match line.trim().split_once(':') {
+            Some(("id", _)) => {}
+            Some(("side", value)) => {
+                side = match value.trim() {
+                    "client" => Side::Client,
+                    "server" => Side::Server,
+                    _ => Side::Both,
+                }
+            }
+            Some(("sha1", value)) => sha1 = Some(value.trim().to_lowercase()),
+            _ => description.push(line),
+        }
+    }
+    let sha1 = sha1.filter(|sha1| sha1.len() == 40 && sha1.chars().all(|c| c.is_ascii_hexdigit()))?;
+    let name = release.name.unwrap_or_default();
+    let title = name
+        .trim()
+        .strip_suffix(version)
+        .map(str::trim)
+        .filter(|title| !title.is_empty())
+        .unwrap_or(id)
+        .to_string();
+    Some(CustomRelease {
+        id: id.to_string(),
+        title,
+        name,
+        description: description.join("\n").trim().to_string(),
+        date: release.published_at.unwrap_or_default(),
+        side,
+        sha1,
+        file_name: asset.name,
+        url: asset.browser_download_url,
+        size: asset.size,
+        tag: release.tag_name,
+    })
+}
+
+fn custom_version(release: CustomRelease) -> Version {
+    Version {
+        id: release.tag,
+        name: release.name,
+        file_name: release.file_name,
+        sha1: release.sha1,
+        size: release.size,
+        url: Some(release.url),
+        date: release.date,
+        game_versions: vec![],
+        loaders: vec![],
+        dependencies: vec![],
+        side: Some(release.side),
+    }
+}
+
+fn custom_author() -> String {
+    MODS_REPO.split('/').next().unwrap_or_default().to_string()
 }
 
 async fn curseforge_updates(
@@ -483,6 +661,7 @@ fn modrinth_version(version: MrVersion) -> Option<Version> {
         date: version.date_published,
         game_versions: version.game_versions,
         loaders: version.loaders,
+        side: None,
         dependencies: version
             .dependencies
             .into_iter()
@@ -517,6 +696,7 @@ fn curseforge_version(file: CfFile) -> Option<Version> {
         date: file.file_date,
         game_versions,
         loaders,
+        side: None,
         dependencies: file
             .dependencies
             .into_iter()
@@ -527,6 +707,38 @@ fn curseforge_version(file: CfFile) -> Option<Version> {
             })
             .collect(),
     })
+}
+
+#[derive(Clone)]
+struct CustomRelease {
+    id: String,
+    tag: String,
+    title: String,
+    name: String,
+    description: String,
+    date: String,
+    side: Side,
+    sha1: String,
+    file_name: String,
+    url: String,
+    size: u64,
+}
+
+#[derive(Deserialize)]
+struct GhRelease {
+    tag_name: String,
+    name: Option<String>,
+    body: Option<String>,
+    published_at: Option<String>,
+    draft: bool,
+    assets: Vec<GhAsset>,
+}
+
+#[derive(Deserialize)]
+struct GhAsset {
+    name: String,
+    browser_download_url: String,
+    size: u64,
 }
 
 #[derive(Deserialize)]

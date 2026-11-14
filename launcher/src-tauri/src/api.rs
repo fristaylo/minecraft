@@ -63,7 +63,7 @@ pub struct Manifest {
     pub loader: Loader,
     pub java: Option<u32>,
     #[serde(default)]
-    pub server: Value,
+    pub server: Option<String>,
     #[serde(default)]
     pub theme: Value,
     pub files: Vec<ManifestFile>,
@@ -119,6 +119,8 @@ pub enum Source {
     Modrinth,
     Curseforge,
     Manual,
+    Local,
+    Custom,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq)]

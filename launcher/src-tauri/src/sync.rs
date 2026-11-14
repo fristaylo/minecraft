@@ -63,6 +63,7 @@ pub async fn play(
             minecraft: manifest.minecraft,
             loader: manifest.loader,
             java_major: manifest.java,
+            server: manifest.server,
         },
         Auth {
             name: me.name,

@@ -1,0 +1,72 @@
+name: Mods release
+
+on:
+    push:
+        branches: [master]
+        paths: ['mods/**']
+    workflow_dispatch:
+
+concurrency:
+    group: mods-release
+    cancel-in-progress: false
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '--fix')
+        runs-on: ubuntu-latest
+        env:
+            GH_TOKEN: ${{ github.token }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: 21
+
+            - uses: gradle/actions/setup-gradle@v4
+
+            - name: Build and release changed mods
+              env:
+                  BEFORE: ${{ github.event.before }}
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -z "$BEFORE" ] || [[ "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+                      DIRS=$(find mods -mindepth 1 -maxdepth 1 -type d | sort)
+                  else
+                      DIRS=$(git diff --name-only "$BEFORE" "$GITHUB_SHA" -- mods | cut -d/ -f1-2 | sort -u)
+                  fi
+                  for DIR in $DIRS; do
+                      META="$DIR/src/main/resources/fabric.mod.json"
+                      [ -f "$META" ] || continue
+                      ID=$(jq -r .id "$META")
+                      NAME=$(jq -r .name "$META")
+                      case "$(jq -r '.environment // "*"' "$META")" in
+                          client) SIDE=client ;;
+                          server) SIDE=server ;;
+                          *) SIDE=both ;;
+                      esac
+                      LATEST=$(git tag --list "$ID-v[0-9]*.[0-9]*.[0-9]*" --sort=-v:refname | head -n 1)
+                      if [ -z "$LATEST" ]; then
+                          VERSION=$(sed -n 's/^mod_version=//p' "$DIR/gradle.properties")
+                      else
+                          BASE=${LATEST#"$ID"-v}
+                          VERSION="${BASE%.*}.$((${BASE##*.} + 1))"
+                      fi
+                      chmod +x "$DIR/gradlew"
+                      (cd "$DIR" && ./gradlew build -Pmod_version="$VERSION")
+                      JAR=$(ls "$DIR"/build/libs/"$ID"-"$VERSION".jar)
+                      SHA1=$(sha1sum "$JAR" | cut -d' ' -f1)
+                      {
+                          jq -r .description "$META"
+                          echo
+                          echo "id: $ID"
+                          echo "side: $SIDE"
+                          echo "sha1: $SHA1"
+                      } > "$RUNNER_TEMP/notes.md"
+                      gh release create "$ID-v$VERSION" "$JAR" --target "$GITHUB_SHA" --title "$NAME $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+                  done
