@@ -1,0 +1,18 @@
+{
+  "category.notebook.keys": "Ванильный блокнот",
+  "category.notebook.presets": "Книги",
+  "category.notebook.config": "Настройки",
+  "key.notebook.open": "Открыть книгу",
+  "tooltip.notebook.delete": "Удалить страницу",
+  "tooltip.notebook.bookmark.goto": "Перейти к странице с закладкой",
+  "tooltip.notebook.bookmark.create": "Добавить страницу в закладки",
+  "tooltip.notebook.import": "Импорт",
+  "tooltip.notebook.export": "Экспорт",
+  "bookconfig.dir": "Папка хранения книг (по умолчанию: Notebook/Default)",
+  "bookconfig.startpage": "Начальная страница (по умолчанию: 0)",
+  "bookconfig.limit": "Лимит страниц (по умолчанию: -1)",
+  "bookconfig.warning": "Внимание: изменение этих параметров может сломать установку. Здесь водятся драконы!",
+  "bookconfig.warning_reset": "После изменения этих параметров могут возникнуть ошибки, если не перезапустить игру!",
+  "devwarning.info": "(Режим разработчика)",
+  "notebook.gay": "§5Р§9а§1д§3у§2ж§aн§eо§6г§cо §4п§bр§dа§rй§dд§bа §5:§e3"
+}

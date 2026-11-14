@@ -1,0 +1,14 @@
+{
+  "midnightlib.overview.title": "Обзор MidnightConfig",
+  "midnightlib.midnightconfig.title": "Настройки MidnightLib",
+  "midnightlib.midnightconfig.config_screen_list": "Включить список экранов настроек",
+  "midnightlib.midnightconfig.enum.ConfigButton.TRUE": "§aДа",
+  "midnightlib.midnightconfig.enum.ConfigButton.FALSE": "§cНет",
+  "midnightlib.midnightconfig.enum.ConfigButton.MODMENU": "§bModMenu",
+  "midnightlib.modrinth": "Modrinth",
+  "midnightlib.curseforge": "CurseForge",
+  "midnightlib.wiki": "Вики",
+  "modmenu.descriptionTranslation.midnightlib": "Общая библиотека для удобной настройки.\nПредоставляет API конфигурации, автоматическую интеграцию с другими модами и общие утилиты.",
+  "modmenu.summaryTranslation.midnightlib": "Общая библиотека для удобной настройки.",
+  "midnightconfig.colorChooser.title": "Выберите цвет"
+}

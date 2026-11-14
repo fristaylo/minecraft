@@ -1,0 +1,4 @@
+{
+  "dataPack.yungsapi.locate_replacer.name": "Заменённые структуры ванили из YUNG's API",
+  "dataPack.yungsapi.locate_replacer.description": "Скрывает заменённые ванильные структуры от модов, ищущих структуры."
+}

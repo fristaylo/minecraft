@@ -1,0 +1,22 @@
+{
+  "farmersdelight.configuration.open_mod_page": "Открыть страницу %s на CurseForge",
+  "tag.block.farmersdelight.does_not_survive.rich_soil": "Плодородная почва",
+  "tag.block.farmersdelight.does_not_survive.rich_soil_farmland": "Плодородная пашня",
+  "tag.block.farmersdelight.survives.rich_soil": "Плодородная почва",
+  "tag.block.farmersdelight.survives.rich_soil_farmland": "Плодородная пашня",
+  "tag.entity_type.farmersdelight.drops_leather": "Роняют кожу",
+  "tag.worldgen.farmersdelight.biome.has_brown_mushroom_colony": "Содержат колонию коричневых грибов",
+  "tag.worldgen.farmersdelight.biome.has_red_mushroom_colony": "Содержат колонию красных грибов",
+  "tag.worldgen.farmersdelight.biome.has_wild_beetroots": "Содержат дикую свёклу",
+  "tag.worldgen.farmersdelight.biome.has_wild_cabbage": "Содержат дикую капусту",
+  "tag.worldgen.farmersdelight.biome.wild_carrots_blacklist": "Чёрный список дикой моркови",
+  "tag.worldgen.farmersdelight.biome.wild_carrots_whitelist": "Белый список дикой моркови",
+  "tag.worldgen.farmersdelight.biome.wild_onions_blacklist": "Чёрный список дикого лука",
+  "tag.worldgen.farmersdelight.biome.wild_onions_whitelist": "Белый список дикого лука",
+  "tag.worldgen.farmersdelight.biome.wild_potatoes_blacklist": "Чёрный список дикого картофеля",
+  "tag.worldgen.farmersdelight.biome.wild_potatoes_whitelist": "Белый список дикого картофеля",
+  "tag.worldgen.farmersdelight.biome.wild_rice_blacklist": "Чёрный список дикого риса",
+  "tag.worldgen.farmersdelight.biome.wild_rice_whitelist": "Белый список дикого риса",
+  "tag.worldgen.farmersdelight.biome.wild_tomatoes_blacklist": "Чёрный список диких томатов",
+  "tag.worldgen.farmersdelight.biome.wild_tomatoes_whitelist": "Белый список диких томатов"
+}

@@ -1,0 +1,9 @@
+{
+  "betterconfig.commands.config.comment": "Комментарий к %s:",
+  "betterconfig.commands.config.get": "Сейчас %s имеет значение %s.",
+  "betterconfig.commands.config.reset": "Параметр %s сброшен до значения %s.",
+  "betterconfig.commands.config.set": "Параметру %s задано значение %s.",
+  "betterconfig.commands.config.add": "%s добавлено в %s.",
+  "betterconfig.commands.config.put": "Соответствие %s=%s добавлено в %s.",
+  "betterconfig.commands.config.remove": "%s удалено из %s."
+}

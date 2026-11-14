@@ -1,0 +1,10 @@
+{
+  "config.golemoverhaul.client.title": "Клиент Golem Overhaul",
+  "config.golemoverhaul.description": "Golem Overhaul добавляет потрясающих големов!",
+  "config.golemoverhaul.links.curseforge": "CurseForge",
+  "config.golemoverhaul.links.discord": "Discord",
+  "config.golemoverhaul.links.github": "GitHub",
+  "config.golemoverhaul.links.modrinth": "Modrinth",
+  "config.golemoverhaul.title": "Golem Overhaul",
+  "item.golemoverhaul.coal_golem": "Угольный голем"
+}

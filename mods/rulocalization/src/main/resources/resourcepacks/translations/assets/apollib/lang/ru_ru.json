@@ -1,0 +1,9 @@
+{
+  "config.apollib.default": "По умолчанию: ",
+  "config.apollib.done": "Сохранить и закрыть",
+  "config.apollib.done.tooltip": "Сохраняет изменения и закрывает экран.",
+  "config.apollib.export": "Экспорт",
+  "config.apollib.export.tooltip": "Копирует текущий файл конфигурации в буфер обмена.",
+  "config.apollib.back": "Назад",
+  "config.apollib.back.tooltip": "Закрывает экран без сохранения изменений."
+}

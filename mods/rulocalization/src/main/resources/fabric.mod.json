@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "rulocalization",
+  "version": "${version}",
+  "name": "Russian Localization",
+  "description": "Русский перевод модов сборки",
+  "authors": [
+    "Agon"
+  ],
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "ru.localization.RuLocalization"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-resource-loader-v0": "*"
+  }
+}

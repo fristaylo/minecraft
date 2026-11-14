@@ -1,0 +1,6 @@
+{
+  "moreculling.config.category.leaves": "Отбраковка листьев",
+  "moreculling.config.category.item_frame": "Отбраковка рамок",
+  "moreculling.config.option.paintingCulling": "Отбраковка картин",
+  "moreculling.config.option.paintingCulling.tooltip": "Отбраковывает задние и внутренние грани картин"
+}

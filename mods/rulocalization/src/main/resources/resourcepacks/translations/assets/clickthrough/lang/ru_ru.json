@@ -1,0 +1,9 @@
+{
+  "clickthrough.config.switchonattack": "Перенаправлять и левую кнопку",
+  "clickthrough.config.isActive": "Включить ClickThrough",
+  "clickthrough.config.containers": "Дополнительные контейнеры",
+  "clickthrough.config.tt.switchonattack": "Также перенаправлять щелчки левой кнопкой на то, что находится за табличкой",
+  "clickthrough.config.switchonattack.never": "Никогда",
+  "clickthrough.config.switchonattack.first": "Первый щелчок",
+  "clickthrough.config.switchonattack.always": "Всегда"
+}
