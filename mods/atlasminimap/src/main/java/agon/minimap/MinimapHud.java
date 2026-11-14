@@ -95,7 +95,7 @@ public class MinimapHud {
             }
         });
         AntiqueAtlas.getOrderedFriends().forEach((uuid, friend) -> {
-            if (!uuid.equals(SurveyorClient.getClientUuid())) {
+            if (friend != null && !uuid.equals(SurveyorClient.getClientUuid())) {
                 atlas.renderPlayer(matrices, null, 0, AtlasRenderer.MAX_LIGHT, friend, 1, 1, false, false);
             }
         });
