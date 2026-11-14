@@ -4,6 +4,7 @@ import agon.menu.AgonTitleScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
+import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.world.ClientWorld;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,7 +18,7 @@ public class MinecraftClientMixin {
 
 	@ModifyVariable(method = "setScreen", at = @At("HEAD"), argsOnly = true)
 	private Screen agonmenu$replaceTitleScreen(Screen screen) {
-		if (screen == null ? world == null : screen.getClass() == TitleScreen.class) {
+		if (screen == null ? world == null : screen.getClass() == TitleScreen.class || screen instanceof MultiplayerScreen) {
 			return new AgonTitleScreen();
 		}
 		return screen;

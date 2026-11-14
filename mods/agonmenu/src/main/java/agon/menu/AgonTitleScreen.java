@@ -12,7 +12,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.LogoDrawer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
-import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.option.LanguageOptionsScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -70,7 +69,9 @@ public class AgonTitleScreen extends Screen {
 			statusY = y;
 			y += 15;
 		}
-		addDrawableChild(new JoinButton(center - 100, y, Text.literal("Подключиться к серверу"), button -> join()));
+		JoinButton joinButton = new JoinButton(center - 100, y, Text.literal("Подключиться к серверу"), button -> join());
+		joinButton.active = ADDRESS != null;
+		addDrawableChild(joinButton);
 		y += 28;
 		addDrawableChild(ButtonWidget.builder(Text.literal("Настройки"), button -> client.setScreen(new OptionsScreen(this, client.options)))
 			.dimensions(center - 100, y, 98, 20)
@@ -143,10 +144,6 @@ public class AgonTitleScreen extends Screen {
 	}
 
 	private void join() {
-		if (ADDRESS == null) {
-			client.setScreen(new MultiplayerScreen(this));
-			return;
-		}
 		ConnectScreen.connect(this, client, ServerAddress.parse(ADDRESS), new ServerInfo("Сервер", ADDRESS, ServerInfo.ServerType.OTHER), false, null);
 	}
 
@@ -193,8 +190,8 @@ public class AgonTitleScreen extends Screen {
 		@Override
 		protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
 			RenderSystem.enableBlend();
-			context.drawGuiTexture(isSelected() ? JOIN_HIGHLIGHTED : JOIN, getX(), getY(), getWidth(), getHeight());
-			drawMessage(context, MinecraftClient.getInstance().textRenderer, 0xFFFFFFFF);
+			context.drawGuiTexture(active && isSelected() ? JOIN_HIGHLIGHTED : JOIN, getX(), getY(), getWidth(), getHeight());
+			drawMessage(context, MinecraftClient.getInstance().textRenderer, active ? 0xFFFFFFFF : 0xFFA0A0A0);
 		}
 	}
 
