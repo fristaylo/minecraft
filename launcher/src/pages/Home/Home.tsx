@@ -114,7 +114,6 @@ export function Home() {
               <span>
                 <Icon name="signal" size={14} /> {status?.ping != null ? `${status.ping} мс` : '—'}
               </span>
-              <span>вход сразу на сервер</span>
             </div>
           </div>
         )}

@@ -46,8 +46,11 @@ function queryStatus(): Promise<ServerStatus> {
           const packet = buffer.subarray(length.size, length.size + length.value)
           const id = readVarInt(packet, 0)
           const size = id && readVarInt(packet, id.size)
-          socket.end()
-          if (!id || !size) return finish(offline)
+          if (!id || !size) {
+            finish(offline)
+            socket.end()
+            return
+          }
           const start = id.size + size.size
           try {
             const json: StatusJson = JSON.parse(packet.toString('utf8', start, start + size.value))
@@ -63,6 +66,7 @@ function queryStatus(): Promise<ServerStatus> {
           } catch {
             finish(offline)
           }
+          socket.end()
         },
         error() {
           finish(offline)
