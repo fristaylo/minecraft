@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.wdiscute.starcatcher.lib.multiblock.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ShutUpWarnsMixin"
+  ],
+  "client": [
+    "ClientLevelMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

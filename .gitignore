@@ -2,7 +2,7 @@ node_modules
 target
 dist
 .env
-data/
+/data/
 launcher/src-tauri/gen
 mods/*/build
 mods/*/.gradle

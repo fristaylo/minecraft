@@ -1,0 +1,31 @@
+package com.wdiscute.starcatcher.registry;
+
+import com.wdiscute.starcatcher.Starcatcher;
+import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+
+import java.util.function.Supplier;
+
+public interface SCParticles
+{
+    DeferredRegister<ParticleType<?>> PARTICLE_TYPES =
+            DeferredRegister.create(BuiltInRegistries.PARTICLE_TYPE, Starcatcher.MOD_ID);
+
+
+    Supplier<SimpleParticleType> VALLEY_NOTIFICATION =
+            PARTICLE_TYPES.register("valley_notification", () -> FabricParticleTypes.simple(true));
+
+    Supplier<SimpleParticleType> FISHING_BITING =
+            PARTICLE_TYPES.register("fishing_biting", () -> FabricParticleTypes.simple(true));
+
+    Supplier<SimpleParticleType> FISHING_BITING_LAVA =
+            PARTICLE_TYPES.register("fishing_biting_lava", () -> FabricParticleTypes.simple(true));
+
+    static void register()
+    {
+        PARTICLE_TYPES.register();
+    }
+
+}
