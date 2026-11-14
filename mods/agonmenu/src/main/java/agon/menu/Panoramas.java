@@ -1,10 +1,8 @@
 package agon.menu;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.CubeMapRenderer;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 
@@ -13,7 +11,6 @@ public final class Panoramas {
 	private static final long SLOT_MS = 8000;
 	private static final long FADE_MS = 1600;
 	private static final float DEGREES_PER_SECOND = 2.0F;
-	private static final Identifier VIGNETTE = Identifier.of("agonmenu", "textures/gui/vignette.png");
 	private static final CubeMapRenderer[] CUBE_MAPS = new CubeMapRenderer[NAMES.length];
 	private static final CompletableFuture<?>[] LOADS = new CompletableFuture<?>[NAMES.length];
 	private static final long START = Util.getMeasuringTimeMs();
@@ -22,7 +19,7 @@ public final class Panoramas {
 	private Panoramas() {
 	}
 
-	public static void render(DrawContext context, int width, int height, float delta) {
+	public static void render() {
 		long elapsed = Util.getMeasuringTimeMs() - START;
 		int slot = (int) (elapsed / SLOT_MS);
 		long phase = elapsed % SLOT_MS;
@@ -37,13 +34,6 @@ public final class Panoramas {
 		} else {
 			load(next);
 		}
-		vignette(context, width, height);
-	}
-
-	private static void vignette(DrawContext context, int width, int height) {
-		RenderSystem.enableBlend();
-		context.drawTexture(VIGNETTE, 0, 0, width, height, 0, 0, 128, 128, 128, 128);
-		RenderSystem.disableBlend();
 	}
 
 	private static void draw(int index, float pitch, float yaw, float alpha) {

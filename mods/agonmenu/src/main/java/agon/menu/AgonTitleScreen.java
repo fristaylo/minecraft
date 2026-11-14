@@ -126,7 +126,7 @@ public class AgonTitleScreen extends Screen {
 
 	@Override
 	public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-		Panoramas.render(context, width, height, delta);
+		Panoramas.render();
 	}
 
 	@Override

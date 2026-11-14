@@ -20,10 +20,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ScreenMixin {
 	@Shadow
 	protected MinecraftClient client;
-	@Shadow
-	public int width;
-	@Shadow
-	public int height;
 
 	@Shadow
 	protected abstract void renderPanoramaBackground(DrawContext context, float delta);
@@ -36,7 +32,7 @@ public abstract class ScreenMixin {
 
 	@Inject(method = "renderPanoramaBackground", at = @At("HEAD"), cancellable = true)
 	private void agonmenu$panorama(DrawContext context, float delta, CallbackInfo ci) {
-		Panoramas.render(context, width, height, delta);
+		Panoramas.render();
 		ci.cancel();
 	}
 
