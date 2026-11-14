@@ -9,6 +9,7 @@ use std::{
     collections::BTreeSet,
     io::Read,
     path::{Component, Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
     time::Duration,
 };
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -664,14 +665,20 @@ async fn upload_missing(
     files: Vec<&ManifestFile>,
 ) -> Result<()> {
     let total = files.len() as u64;
+    let done = AtomicU64::new(0);
+    let done = &done;
     let mut pending = stream::iter(files.into_iter().cloned())
-        .map(|file| async move { upload(client, token, store, &file).await.map(|()| file.path) })
+        .map(|file| async move {
+            emit(app, "upload", &file.path, done.load(Ordering::Relaxed), total);
+            let result = upload(client, token, store, &file).await;
+            done.fetch_add(1, Ordering::Relaxed);
+            result
+        })
         .buffer_unordered(4);
-    let mut done = 0;
-    while let Some(label) = pending.next().await {
-        done += 1;
-        emit(app, "upload", &label?, done, total);
+    while let Some(result) = pending.next().await {
+        result?;
     }
+    emit(app, "upload", "", total, total);
     Ok(())
 }
 
@@ -690,6 +697,7 @@ async fn upload(client: &Client, token: &str, store: &Path, file: &ManifestFile)
             send(
                 client
                     .post(admin_url("/files/fetch"))
+                    .timeout(Duration::from_secs(120))
                     .bearer_auth(token)
                     .json(&json!({ "url": file.url, "sha1": file.sha1 })),
             )

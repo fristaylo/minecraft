@@ -29,9 +29,13 @@ adminFiles.post('/fetch', async (c) => {
   const url = cdnUrl(body.url)
   if (!url || !isSha1(body.sha1)) return fail(c, 400, 'IllegalArgumentException', 'Invalid url or sha1.')
   if ((await objectSize(body.sha1)) === undefined) {
-    const response = await fetch(url)
-    if (!response.ok || !response.body) return fail(c, 502, 'BadGateway', `Download failed with status ${response.status}.`)
-    if (!(await saveObject(response.body, body.sha1))) return fail(c, 400, 'IllegalArgumentException', 'SHA-1 mismatch.')
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(60_000) })
+      if (!response.ok || !response.body) return fail(c, 502, 'BadGateway', `Download failed with status ${response.status}.`)
+      if (!(await saveObject(response.body, body.sha1))) return fail(c, 400, 'IllegalArgumentException', 'SHA-1 mismatch.')
+    } catch {
+      return fail(c, 502, 'BadGateway', 'Download failed or timed out.')
+    }
   }
   return c.body(null, 204)
 })
