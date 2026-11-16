@@ -200,7 +200,7 @@ async fn prepare(
     args.push(version.main_class.clone());
     args.extend(game.iter().map(|a| fill(a, &vars)));
     let fullscreen = matches!(settings.window.mode, WindowMode::Fullscreen);
-    write_fullscreen(&game_dir, fullscreen).await?;
+    write_options(&game_dir, fullscreen).await?;
     if !fullscreen {
         args.extend([
             "--width".to_owned(),
@@ -428,7 +428,7 @@ fn null_as_default<'de, D: Deserializer<'de>>(deserializer: D) -> Result<String,
     Ok(Option::<String>::deserialize(deserializer)?.unwrap_or_default())
 }
 
-async fn write_fullscreen(game_dir: &Path, fullscreen: bool) -> Result<()> {
+async fn write_options(game_dir: &Path, fullscreen: bool) -> Result<()> {
     let path = game_dir.join("options.txt");
     let line = format!("fullscreen:{fullscreen}");
     let existing = match tokio::fs::read_to_string(&path).await {
@@ -437,20 +437,32 @@ async fn write_fullscreen(game_dir: &Path, fullscreen: bool) -> Result<()> {
         Err(e) => return Err(e.into()),
     };
     let mut found = false;
-    let mut lines: Vec<&str> = existing
+    let mut lines: Vec<String> = existing
         .lines()
         .map(|l| {
             if l.starts_with("fullscreen:") {
                 found = true;
-                line.as_str()
+                line.clone()
             } else {
-                l
+                with_compat_pack(l).unwrap_or_else(|| l.to_owned())
             }
         })
         .collect();
     if !found {
-        lines.push(&line);
+        lines.push(line);
     }
     tokio::fs::write(&path, lines.join("\n") + "\n").await?;
     Ok(())
+}
+
+fn with_compat_pack(line: &str) -> Option<String> {
+    const COMPAT_PACK: &str = "vanillabackport:freshly_animated_legacy";
+    let mut packs: Vec<String> =
+        serde_json::from_str(line.strip_prefix("resourcePacks:")?).ok()?;
+    packs.retain(|p| p != COMPAT_PACK);
+    let fresh = packs
+        .iter()
+        .position(|p| p.starts_with("file/") && p.contains("FreshAnimations"))?;
+    packs.insert(fresh + 1, COMPAT_PACK.to_owned());
+    Some(format!("resourcePacks:{}", serde_json::to_string(&packs).ok()?))
 }
