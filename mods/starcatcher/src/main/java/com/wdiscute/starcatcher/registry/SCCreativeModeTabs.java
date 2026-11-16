@@ -15,8 +15,10 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackLinkedSet;
 
 import java.util.List;
+import java.util.Set;
 
 
 public interface SCCreativeModeTabs
@@ -26,8 +28,10 @@ public interface SCCreativeModeTabs
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, Starcatcher.rl("starcatcher"), FabricItemGroup.builder()
                 .title(Component.translatable("itemGroup.starcatcher.starcatcher"))
                 .icon(SCItems.ROD::toStack)
-                .displayItems((parameters, output) ->
+                .displayItems((parameters, rawOutput) ->
                 {
+                    CreativeModeTab.Output output = deduplicating(rawOutput);
+
                     //Must Have
                     output.accept(SCItems.ROD);
 
@@ -121,5 +125,14 @@ public interface SCCreativeModeTabs
     private static void acceptTag(CreativeModeTab.Output output, TagKey<Item> tag)
     {
         BuiltInRegistries.ITEM.getTagOrEmpty(tag).forEach(o -> output.accept(o.value()));
+    }
+
+    private static CreativeModeTab.Output deduplicating(CreativeModeTab.Output delegate)
+    {
+        Set<ItemStack> added = ItemStackLinkedSet.createTypeAndComponentsSet();
+        return (stack, visibility) ->
+        {
+            if (added.add(stack.copy())) delegate.accept(stack, visibility);
+        };
     }
 }
