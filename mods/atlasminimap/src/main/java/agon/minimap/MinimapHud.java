@@ -90,8 +90,8 @@ public class MinimapHud {
         atlas.worldAtlasData().getAllMarkers(atlas.tileChunks()).forEach((landmark, texture) -> {
             if (landmark.get(LandmarkComponentTypes.POS) != null) {
                 atlas.renderMarker(matrices, null, landmark, texture, 0, AtlasRenderer.MAX_LIGHT,
-                        (markerX, markerY) -> (float) MathHelper.clamp(MathUtil.innerDistanceToEdge(mapArea, new Vector2d(markerX, markerY)) / 32.0, 0, 1),
-                        false, false, 1);
+                        (markerX, markerY) -> (float) MathHelper.clamp(MathUtil.innerDistanceToEdge(mapArea, new Vector2d(markerX, markerY)) / 6.0, 0, 1),
+                        false, false, 0.75F);
             }
         });
         AntiqueAtlas.getOrderedFriends().forEach((uuid, friend) -> {

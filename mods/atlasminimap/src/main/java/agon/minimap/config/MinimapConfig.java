@@ -11,8 +11,18 @@ public class MinimapConfig implements ConfigData {
     @ConfigEntry.BoundedDiscrete(min = 48, max = 160)
     public int size = 86;
 
-    @ConfigEntry.BoundedDiscrete(min = 1, max = 16)
-    public int tileChunks = 6;
+    public int tileChunks = 8;
 
     public boolean showCoordinates = true;
+
+    @Override
+    public void validatePostLoad() {
+        int snapped = 1;
+        for (int candidate = 2; candidate <= 16; candidate *= 2) {
+            if (Math.abs(candidate - tileChunks) <= Math.abs(snapped - tileChunks)) {
+                snapped = candidate;
+            }
+        }
+        tileChunks = snapped;
+    }
 }
