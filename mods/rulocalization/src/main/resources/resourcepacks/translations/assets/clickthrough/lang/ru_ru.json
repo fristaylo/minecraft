@@ -5,5 +5,8 @@
   "clickthrough.config.tt.switchonattack": "Также перенаправлять щелчки левой кнопкой на то, что находится за табличкой",
   "clickthrough.config.switchonattack.never": "Никогда",
   "clickthrough.config.switchonattack.first": "Первый щелчок",
-  "clickthrough.config.switchonattack.always": "Всегда"
+  "clickthrough.config.switchonattack.always": "Всегда",
+  "key.clickthrough.toggle": "Включить/выключить ClickThrough Plus",
+  "clickthrough.msg.active": "ClickThrough Plus включён",
+  "clickthrough.msg.inactive": "ClickThrough Plus выключен"
 }

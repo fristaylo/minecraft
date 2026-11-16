@@ -1,0 +1,10 @@
+{
+  "whitenoise.networking.failed": "Сбой сети WhiteNoise: %s",
+  "tooltip.whitenoise.ctrl": "Удерживайте %s, чтобы показать данные компонентов",
+  "tooltip.whitenoise.shift": "Удерживайте %s, чтобы показать теги",
+  "tooltip.whitenoise.item_tags": "Теги предметов",
+  "tooltip.whitenoise.block_tags": "Теги блоков",
+  "tooltip.whitenoise.durability": "Прочность: %s",
+  "tooltip.whitenoise.nbt_length": "Длина NBT: %s",
+  "whitenoise.configuration.uitext.allowedtooltip": "Допустимые значения: %s"
+}

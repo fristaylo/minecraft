@@ -1,4 +1,9 @@
 {
   "text.betterf3.line.slime_chunk.true": "да",
-  "text.betterf3.line.slime_chunk.false": "нет"
+  "text.betterf3.line.slime_chunk.false": "нет",
+  "text.betterf3.line.help_press": "Нажмите F3 + Q",
+  "text.betterf3.line.negative_z": "В сторону отрицательной оси Z",
+  "text.betterf3.line.positive_z": "В сторону положительной оси Z",
+  "text.betterf3.line.negative_x": "В сторону отрицательной оси X",
+  "text.betterf3.line.positive_x": "В сторону положительной оси X"
 }

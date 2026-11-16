@@ -254,5 +254,6 @@
   "moonlight.configuration.test_category.test_schema_advanced": "Тестовая расширенная схема",
   "moonlight.configuration.test_category.test_schema_advanced.description": "Форма схемы: long, шестнадцатеричный цвет, шаблон, необязательные значения, ограниченный список, пара, диспетчеризация, either, диспетчеризируемая карта, рекурсия, необработанное значение",
   "moonlight.configuration.test_category.test_schema_map": "Тестовая карта схемы",
-  "moonlight.configuration.test_category.test_schema_map.description": "Карта схемы"
+  "moonlight.configuration.test_category.test_schema_map.description": "Карта схемы",
+  "tag.item.moonlight.non_recolorable": "Не поддаётся перекраске"
 }

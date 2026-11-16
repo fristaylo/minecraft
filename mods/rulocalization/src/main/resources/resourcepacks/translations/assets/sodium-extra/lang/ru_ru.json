@@ -232,5 +232,9 @@
   "sodium-extra.overlay.coordinates_unavailable": "Координаты недоступны (включён reducedDebugInfo).",
   "sodium-extra.suggestRSO.header": "Совет: установите Reese’s Sodium Options",
   "sodium-extra.suggestRSO.message": "Настоятельно рекомендуется установить Reese’s Sodium Options вместе с Sodium Extra. Из-за растущего числа функций экран настроек графики Sodium без него может стать неудобным для навигации.",
-  "sodium-extra.units.blocks": "Блоков: %s"
+  "sodium-extra.units.blocks": "Блоков: %s",
+  "sodium-extra.option.cloud_height.tooltip": "Задаёт высоту облаков, используемую переопределением высоты облаков Sodium Extra.",
+  "sodium-extra.option.fog.tooltip": "Настраивает дальность атмосферного тумана рельефа в этом измерении.\n0: использовать ванильные настройки тумана\n1+: задать дальность тумана в чанках\nВыкл.: отключить атмосферный туман рельефа",
+  "sodium-extra.option.fog_start.tooltip": "Определяет, как близко к игроку начинается атмосферный туман рельефа.",
+  "sodium-extra.option.multi_dimension_fog.tooltip": "Переключает глобальные настройки тумана на отдельные настройки для каждого измерения. Если параметр отключён, глобальные настройки применяются ко всем измерениям.\nПосле изменения этого параметра закройте и снова откройте меню, чтобы обновить ползунки тумана."
 }

@@ -1,4 +1,6 @@
 {
+  "farmersdelight.advancement.craft_knife": "Охота и собирательство",
+  "farmersdelight.advancement.craft_knife.desc": "Создайте нож, чтобы добывать больше продуктов из растений и животных",
   "farmersdelight.configuration.open_mod_page": "Открыть страницу %s на CurseForge",
   "tag.block.farmersdelight.does_not_survive.rich_soil": "Плодородная почва",
   "tag.block.farmersdelight.does_not_survive.rich_soil_farmland": "Плодородная пашня",
