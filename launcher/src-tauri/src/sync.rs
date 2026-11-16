@@ -8,7 +8,7 @@ use std::{
 };
 use tauri::{AppHandle, State};
 
-use crate::api::{self, CmdError, Manifest, ManifestFile, Policy, Role, Side, BASE};
+use crate::api::{self, CmdError, Kind, Manifest, ManifestFile, Policy, Role, Side, BASE};
 use crate::download::{Ctx, Task};
 use crate::launch::{self, Auth, Instance};
 use crate::{account, AppState};
@@ -21,6 +21,7 @@ struct SyncState {
     version: Option<String>,
     files: HashMap<String, Installed>,
     optional: HashMap<String, bool>,
+    enabled_packs: HashSet<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -118,6 +119,7 @@ pub async fn reset_configs(
     let manifest = api::manifest(&state.client, &token, &pack_id).await?;
     let dir = instance_dir(&state, &pack_id);
     let mut sync_state = load(&dir).await;
+    sync_state.enabled_packs.clear();
     for file in manifest
         .files
         .iter()
@@ -159,6 +161,7 @@ async fn sync(ctx: &Ctx, manifest: &Manifest) -> Result<()> {
         })
         .collect::<Result<Vec<_>>>()?;
     ctx.download("sync", &manifest.name, tasks).await?;
+    enable_packs(&dir, manifest, &mut sync_state).await?;
     sync_state.version = Some(manifest.version.clone());
     sync_state.files = plan.files;
     save(&dir, &sync_state).await
@@ -173,13 +176,7 @@ async fn plan<'a>(dir: &Path, manifest: &'a Manifest, state: &SyncState) -> Resu
     for file in manifest.files.iter().filter(|f| f.side != Side::Server) {
         let target = resolve(dir, &file.path)?;
         let last = state.files.get(&file.path);
-        let enabled = !file.optional
-            || state
-                .optional
-                .get(&file.path)
-                .copied()
-                .unwrap_or(file.default_enabled);
-        if !enabled {
+        if !is_enabled(file, state) {
             if last.is_some() {
                 plan.remove.push(target);
             }
@@ -234,6 +231,62 @@ async fn plan<'a>(dir: &Path, manifest: &'a Manifest, state: &SyncState) -> Resu
     Ok(plan)
 }
 
+async fn enable_packs(dir: &Path, manifest: &Manifest, state: &mut SyncState) -> Result<()> {
+    let target: Vec<&str> = manifest
+        .files
+        .iter()
+        .filter(|f| f.kind == Kind::Resourcepack && f.side != Side::Server && is_enabled(f, state))
+        .map(|f| f.path.as_str())
+        .collect();
+    let removed: Vec<String> = state
+        .enabled_packs
+        .iter()
+        .filter(|p| !target.contains(&p.as_str()))
+        .map(|p| pack_id(p))
+        .collect();
+    let added: Vec<usize> = (0..target.len())
+        .filter(|i| !state.enabled_packs.contains(target[*i]))
+        .collect();
+    if removed.is_empty() && added.is_empty() {
+        return Ok(());
+    }
+    let ids: Vec<String> = target.iter().map(|p| pack_id(p)).collect();
+    let options = dir.join("options.txt");
+    let existing = match tokio::fs::read_to_string(&options).await {
+        Ok(s) => s,
+        Err(e) if e.kind() == ErrorKind::NotFound => String::new(),
+        Err(e) => return Err(e.into()),
+    };
+    let mut lines: Vec<String> = existing.lines().map(str::to_owned).collect();
+    edit_list(&mut lines, "resourcePacks", &["vanilla"], |list| {
+        list.retain(|p| !removed.contains(p));
+        for i in &added {
+            if list.contains(&ids[*i]) {
+                continue;
+            }
+            let position_of = |id: &String| list.iter().position(|p| p == id);
+            let at = ids[i + 1..]
+                .iter()
+                .find_map(position_of)
+                .map(|p| p + 1)
+                .or_else(|| ids[..*i].iter().rev().find_map(position_of))
+                .unwrap_or(list.len());
+            list.insert(at, ids[*i].clone());
+        }
+    });
+    edit_list(&mut lines, "incompatibleResourcePacks", &[], |list| {
+        list.retain(|p| !removed.contains(p));
+        for i in &added {
+            if !list.contains(&ids[*i]) {
+                list.push(ids[*i].clone());
+            }
+        }
+    });
+    tokio::fs::write(&options, lines.join("\n") + "\n").await?;
+    state.enabled_packs = target.iter().map(|p| (*p).to_owned()).collect();
+    Ok(())
+}
+
 fn instance_dir(state: &AppState, pack_id: &str) -> PathBuf {
     state
         .settings
@@ -271,4 +324,41 @@ async fn save(dir: &Path, state: &SyncState) -> Result<()> {
 async fn file_sha1(path: &Path) -> Option<String> {
     let bytes = tokio::fs::read(path).await.ok()?;
     Some(format!("{:x}", Sha1::digest(&bytes)))
+}
+
+fn is_enabled(file: &ManifestFile, state: &SyncState) -> bool {
+    !file.optional
+        || state
+            .optional
+            .get(&file.path)
+            .copied()
+            .unwrap_or(file.default_enabled)
+}
+
+fn pack_id(path: &str) -> String {
+    format!("file/{}", path.strip_prefix("resourcepacks/").unwrap_or(path))
+}
+
+fn edit_list(
+    lines: &mut Vec<String>,
+    key: &str,
+    default: &[&str],
+    edit: impl FnOnce(&mut Vec<String>),
+) {
+    let prefix = format!("{key}:");
+    let index = lines.iter().position(|l| l.starts_with(&prefix));
+    let parsed: Option<Vec<String>> = match index {
+        Some(i) => serde_json::from_str(&lines[i][prefix.len()..]).ok(),
+        None => Some(default.iter().map(|s| (*s).to_owned()).collect()),
+    };
+    let Some(mut list) = parsed else { return };
+    edit(&mut list);
+    let Ok(json) = serde_json::to_string(&list) else {
+        return;
+    };
+    let line = format!("{prefix}{json}");
+    match index {
+        Some(i) => lines[i] = line,
+        None => lines.push(line),
+    }
 }
