@@ -169,31 +169,29 @@ export function Home() {
   function actions() {
     if (run?.packId === pack.id) {
       return (
-        <>
-          <div className={s.prog}>
-            <div className={s.progTop}>
-              <b>{run.label}</b>
-              <span className="pct">{Math.round(run.pct)}%</span>
-            </div>
-            <div className="pbar">
-              <i style={{ width: `${run.pct}%` }} />
-            </div>
-            <div className={s.detail}>
-              <span>{run.detail}</span>
-            </div>
-            <div className={s.steps}>
-              {STEPS.map((step, i) => (
-                <span key={step} className={`${s.step} ${i < run.step ? s.done : i === run.step ? s.now : ''}`}>
-                  {i < run.step && <Icon name="check" size={12} stroke={2.6} />}
-                  {step}
-                </span>
-              ))}
-            </div>
+        <div className={s.prog}>
+          <div className={s.progTop}>
+            <b>{run.label}</b>
+            <span className="pct">{Math.round(run.pct)}%</span>
+            <button className="btn over sm" type="button" disabled={run.step === STEPS.length - 1} onClick={cancel}>
+              Отмена
+            </button>
           </div>
-          <button className="btn over lg" type="button" disabled={run.step === STEPS.length - 1} onClick={cancel}>
-            Отмена
-          </button>
-        </>
+          <div className="pbar">
+            <i style={{ width: `${run.pct}%` }} />
+          </div>
+          <div className={s.detail}>
+            <span>{run.detail}</span>
+          </div>
+          <div className={s.steps}>
+            {STEPS.map((step, i) => (
+              <span key={step} className={`${s.step} ${i < run.step ? s.done : i === run.step ? s.now : ''}`}>
+                {i < run.step && <Icon name="check" size={12} stroke={2.6} />}
+                {step}
+              </span>
+            ))}
+          </div>
+        </div>
       );
     }
     if (running?.packId === pack.id) {

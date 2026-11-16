@@ -188,13 +188,21 @@
 
 .progTop {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
 
   b {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: 600;
     font-size: 15px;
+  }
+
+  :global(.btn) {
+    flex-shrink: 0;
   }
 }
 

@@ -268,10 +268,11 @@ function Files() {
 
 function About() {
   const toast = useToast();
+  const { settings, update } = useSettings();
   const { packs, loadError } = useGame();
   const [version, setVersion] = useState('');
   const [checking, setChecking] = useState(false);
-  const [line, setLine] = useState('Обновления проверяются при каждом запуске');
+  const [line, setLine] = useState('');
   const [available, setAvailable] = useState(false);
 
   useEffect(() => {
@@ -292,7 +293,7 @@ function About() {
 
   return (
     <div className="panel">
-      <Row title={`Версия ${version}`} hint={line}>
+      <Row title={`Версия ${version}`} hint={line || (settings.auto_update ? 'Лаунчер обновляется сам при запуске' : 'При запуске появится уведомление о новой версии')}>
         <button className="btn sm" type="button" disabled={checking} onClick={() => void check()}>
           {checking ? (
             <>
@@ -306,6 +307,15 @@ function About() {
             </>
           )}
         </button>
+      </Row>
+      <Row title="Автообновление" hint="Устанавливать новую версию при запуске лаунчера">
+        <input
+          type="checkbox"
+          className="sw"
+          checked={settings.auto_update}
+          aria-label="Автообновление"
+          onChange={(event) => update({ auto_update: event.target.checked })}
+        />
       </Row>
       {available && (
         <div className={s.row}>

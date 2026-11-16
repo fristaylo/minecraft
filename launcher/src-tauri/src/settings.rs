@@ -16,6 +16,7 @@ pub struct Settings {
     pub console: bool,
     pub game_dir: PathBuf,
     pub auto_join: bool,
+    pub auto_update: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -70,6 +71,7 @@ impl Default for Settings {
             console: false,
             game_dir: default_game_dir(),
             auto_join: false,
+            auto_update: true,
         }
     }
 }

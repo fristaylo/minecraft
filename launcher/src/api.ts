@@ -79,6 +79,7 @@ export type Settings = {
   console: boolean;
   game_dir: string;
   auto_join: boolean;
+  auto_update: boolean;
 };
 
 export type LaunchProgress = {

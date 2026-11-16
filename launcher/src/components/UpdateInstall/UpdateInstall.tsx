@@ -6,7 +6,7 @@ import { useToast } from '@/context/Toast';
 import { formatSize } from '@/format';
 import s from './UpdateInstall.module.scss';
 
-export function UpdateInstall({ onLater }: { onLater?: () => void }) {
+export function useUpdateInstall() {
   const toast = useToast();
   const [progress, setProgress] = useState<UpdateProgress | null>(null);
 
@@ -24,15 +24,29 @@ export function UpdateInstall({ onLater }: { onLater?: () => void }) {
     }
   }
 
+  return { progress, install };
+}
+
+export function UpdateProgressBar({ progress }: { progress: UpdateProgress }) {
+  return (
+    <>
+      <div className="pbar">
+        <i style={{ width: progress.total ? `${Math.min(100, (progress.done / progress.total) * 100)}%` : '0' }} />
+      </div>
+      <span className="hint pct">
+        {progress.total ? `Скачивание · ${formatSize(progress.done)} из ${formatSize(progress.total)}` : 'Скачивание'}
+      </span>
+    </>
+  );
+}
+
+export function UpdateInstall({ onLater }: { onLater?: () => void }) {
+  const { progress, install } = useUpdateInstall();
+
   if (progress) {
     return (
       <div className={s.progress}>
-        <div className="pbar">
-          <i style={{ width: progress.total ? `${Math.min(100, (progress.done / progress.total) * 100)}%` : '0' }} />
-        </div>
-        <span className="hint pct">
-          {progress.total ? `Скачивание · ${formatSize(progress.done)} из ${formatSize(progress.total)}` : 'Скачивание'}
-        </span>
+        <UpdateProgressBar progress={progress} />
       </div>
     );
   }
