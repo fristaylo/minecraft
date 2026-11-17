@@ -189,6 +189,31 @@ pub async fn set_side(
 }
 
 #[tauri::command]
+pub async fn move_resourcepack(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    pack_id: String,
+    path: String,
+    up: bool,
+) -> Result<Manifest, CmdError> {
+    Ok(edit(&app, &state, &pack_id, |draft| {
+        let packs: Vec<usize> = (0..draft.files.len())
+            .filter(|&index| draft.files[index].kind == Kind::Resourcepack)
+            .collect();
+        let at = packs
+            .iter()
+            .position(|&index| draft.files[index].path == path)
+            .ok_or_else(|| anyhow!("{path} is not a resource pack in the draft"))?;
+        let other = if up { at.checked_sub(1) } else { Some(at + 1).filter(|&next| next < packs.len()) };
+        if let Some(other) = other {
+            draft.files.swap(packs[at], packs[other]);
+        }
+        Ok(())
+    })
+    .await?)
+}
+
+#[tauri::command]
 pub async fn admin_set_optional(
     app: AppHandle,
     state: State<'_, AppState>,

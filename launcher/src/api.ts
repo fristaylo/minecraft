@@ -218,6 +218,7 @@ export const addProject = (args: { packId: Pack['id']; source: Market; projectId
   invoke<Outcome>('add_project', args);
 export const removeEntry = (args: FileRef) => invoke<Manifest>('remove_entry', args);
 export const setSide = (args: FileRef & { side: Side }) => invoke<Manifest>('set_side', args);
+export const moveResourcepack = (args: FileRef & { up: boolean }) => invoke<Manifest>('move_resourcepack', args);
 export const adminSetOptional = (args: FileRef & Pick<ManifestFile, 'optional' | 'defaultEnabled'>) =>
   invoke<Manifest>('admin_set_optional', args);
 export const setPolicy = (args: FileRef & { policy: Policy }) => invoke<Manifest>('set_policy', args);

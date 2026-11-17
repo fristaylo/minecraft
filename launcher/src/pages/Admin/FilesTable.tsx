@@ -32,6 +32,7 @@ export function FilesTable({
   onSide,
   onOptional,
   onRemove,
+  onMove,
   onUpdate,
   onManual,
 }: {
@@ -45,6 +46,7 @@ export function FilesTable({
   onSide: (file: ManifestFile, side: Side) => void;
   onOptional: (file: ManifestFile, optional: boolean) => void;
   onRemove: (file: ManifestFile) => void;
+  onMove: (file: ManifestFile, up: boolean) => void;
   onUpdate: (path: ManifestFile['path']) => void;
   onManual: (path: ManifestFile['path']) => void;
 }) {
@@ -61,7 +63,7 @@ export function FilesTable({
           </tr>
         </thead>
         <tbody>
-          {files.map((file) => {
+          {files.map((file, index) => {
             const needed = dependentsOf(all, file).length;
             const update = updates?.find(({ path }) => path === file.path);
             return (
@@ -122,6 +124,28 @@ export function FilesTable({
                   />
                 </td>
                 <td>
+                  {kind === 'resourcepack' && (
+                    <>
+                      <button
+                        className="btn ghost icon sm"
+                        type="button"
+                        aria-label={`Поднять ${fileTitle(file)}`}
+                        disabled={index === 0}
+                        onClick={() => onMove(file, true)}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        className="btn ghost icon sm"
+                        type="button"
+                        aria-label={`Опустить ${fileTitle(file)}`}
+                        disabled={index === files.length - 1}
+                        onClick={() => onMove(file, false)}
+                      >
+                        ↓
+                      </button>
+                    </>
+                  )}
                   <button className="btn ghost icon sm" type="button" aria-label={`Убрать ${fileTitle(file)}`} onClick={() => onRemove(file)}>
                     <Icon name="trash" size={16} />
                   </button>

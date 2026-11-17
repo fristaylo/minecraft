@@ -14,6 +14,7 @@ import {
   checkUpdates,
   deletePack,
   errorText,
+  moveResourcepack,
   openManualDownload,
   projectDetails,
   removeEntry,
@@ -323,6 +324,11 @@ function Content({
               </button>
             </div>
           )}
+          {tab === 'resourcepack' && files.length > 1 && (
+            <div className="toolbar">
+              <span className="hint">Порядок как в игре: выше в списке — ниже приоритет, нижний ресурспак перекрывает верхние.</span>
+            </div>
+          )}
           {files.length ? (
             <FilesTable
               kind={tab}
@@ -337,6 +343,7 @@ function Content({
                 void edit(() => adminSetOptional({ packId: pack.id, path: file.path, optional, defaultEnabled: file.defaultEnabled }))
               }
               onRemove={(file) => void remove(file)}
+              onMove={(file, up) => void edit(() => moveResourcepack({ packId: pack.id, path: file.path, up }))}
               onUpdate={(path) => void update([path])}
               onManual={(path) => void manualDownload(path)}
             />
@@ -479,5 +486,13 @@ function countChanges(draft: Manifest, published: Manifest | undefined): number 
     (draft.loader.version ?? '') !== (published.loader.version ?? '') ||
     draft.java !== published.java ||
     (draft.server ?? '') !== (published.server ?? '');
-  return changed.length + removed.length + (meta ? 1 : 0);
+  const reordered = resourcepackOrder(draft, published) !== resourcepackOrder(published, draft);
+  return changed.length + removed.length + (meta || reordered ? 1 : 0);
+}
+
+function resourcepackOrder({ files }: Manifest, other: Manifest): string {
+  return files
+    .filter((file) => file.kind === 'resourcepack' && other.files.some(({ path }) => path === file.path))
+    .map((file) => file.path)
+    .join('\n');
 }

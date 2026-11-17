@@ -14,6 +14,7 @@ use crate::launch::{self, Auth, Instance};
 use crate::{account, AppState};
 
 const STATE_FILE: &str = ".sync.json";
+const PACKS_V: u32 = 1;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(default)]
@@ -21,7 +22,8 @@ struct SyncState {
     version: Option<String>,
     files: HashMap<String, Installed>,
     optional: HashMap<String, bool>,
-    enabled_packs: HashSet<String>,
+    known_packs: HashSet<String>,
+    packs_v: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -119,7 +121,8 @@ pub async fn reset_configs(
     let manifest = api::manifest(&state.client, &token, &pack_id).await?;
     let dir = instance_dir(&state, &pack_id);
     let mut sync_state = load(&dir).await;
-    sync_state.enabled_packs.clear();
+    sync_state.known_packs.clear();
+    sync_state.packs_v = 0;
     for file in manifest
         .files
         .iter()
@@ -238,52 +241,57 @@ async fn enable_packs(dir: &Path, manifest: &Manifest, state: &mut SyncState) ->
         .filter(|f| f.kind == Kind::Resourcepack && f.side != Side::Server && is_enabled(f, state))
         .map(|f| f.path.as_str())
         .collect();
-    let removed: Vec<String> = state
-        .enabled_packs
+    let migrate = state.packs_v < PACKS_V;
+    let ids: Vec<String> = target.iter().map(|p| pack_id(p)).collect();
+    let added: Vec<&String> = target
+        .iter()
+        .zip(&ids)
+        .filter(|(p, _)| migrate || !state.known_packs.contains(**p))
+        .map(|(_, id)| id)
+        .collect();
+    let gone: Vec<String> = state
+        .known_packs
         .iter()
         .filter(|p| !target.contains(&p.as_str()))
         .map(|p| pack_id(p))
         .collect();
-    let added: Vec<usize> = (0..target.len())
-        .filter(|i| !state.enabled_packs.contains(target[*i]))
-        .collect();
-    if removed.is_empty() && added.is_empty() {
-        return Ok(());
+    if !target.is_empty() || !gone.is_empty() {
+        let options = dir.join("options.txt");
+        let existing = match tokio::fs::read_to_string(&options).await {
+            Ok(s) => s,
+            Err(e) if e.kind() == ErrorKind::NotFound => String::new(),
+            Err(e) => return Err(e.into()),
+        };
+        let mut lines: Vec<String> = existing.lines().map(str::to_owned).collect();
+        let mut present: Vec<&String> = Vec::new();
+        edit_list(&mut lines, "resourcePacks", &["vanilla"], |list| {
+            list.retain(|p| !gone.contains(p));
+            for id in &added {
+                if !list.contains(id) {
+                    list.push((*id).clone());
+                }
+            }
+            present = ids.iter().filter(|id| list.contains(id)).collect();
+            let slots: Vec<usize> = (0..list.len()).filter(|i| ids.contains(&list[*i])).collect();
+            for (slot, id) in slots.into_iter().zip(&present) {
+                list[slot] = (*id).clone();
+            }
+        });
+        edit_list(&mut lines, "incompatibleResourcePacks", &[], |list| {
+            list.retain(|p| !gone.contains(p));
+            for id in &present {
+                if !list.contains(id) {
+                    list.push((*id).clone());
+                }
+            }
+        });
+        let output = lines.join("\n") + "\n";
+        if output != existing {
+            tokio::fs::write(&options, output).await?;
+        }
     }
-    let ids: Vec<String> = target.iter().map(|p| pack_id(p)).collect();
-    let options = dir.join("options.txt");
-    let existing = match tokio::fs::read_to_string(&options).await {
-        Ok(s) => s,
-        Err(e) if e.kind() == ErrorKind::NotFound => String::new(),
-        Err(e) => return Err(e.into()),
-    };
-    let mut lines: Vec<String> = existing.lines().map(str::to_owned).collect();
-    edit_list(&mut lines, "resourcePacks", &["vanilla"], |list| {
-        list.retain(|p| !removed.contains(p));
-        for i in &added {
-            if list.contains(&ids[*i]) {
-                continue;
-            }
-            let position_of = |id: &String| list.iter().position(|p| p == id);
-            let at = ids[i + 1..]
-                .iter()
-                .find_map(position_of)
-                .map(|p| p + 1)
-                .or_else(|| ids[..*i].iter().rev().find_map(position_of))
-                .unwrap_or(list.len());
-            list.insert(at, ids[*i].clone());
-        }
-    });
-    edit_list(&mut lines, "incompatibleResourcePacks", &[], |list| {
-        list.retain(|p| !removed.contains(p));
-        for i in &added {
-            if !list.contains(&ids[*i]) {
-                list.push(ids[*i].clone());
-            }
-        }
-    });
-    tokio::fs::write(&options, lines.join("\n") + "\n").await?;
-    state.enabled_packs = target.iter().map(|p| (*p).to_owned()).collect();
+    state.known_packs = target.iter().map(|p| (*p).to_owned()).collect();
+    state.packs_v = PACKS_V;
     Ok(())
 }
 

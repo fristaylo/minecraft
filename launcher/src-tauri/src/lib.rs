@@ -78,6 +78,7 @@ pub fn run() {
             admin::add_project,
             admin::remove_entry,
             admin::set_side,
+            admin::move_resourcepack,
             admin::admin_set_optional,
             admin::set_policy,
             admin::check_updates,
